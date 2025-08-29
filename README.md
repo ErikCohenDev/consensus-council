@@ -1,6 +1,6 @@
-# Docs Index — LLM Council Audit & Consensus Platform
+# LLM Council Audit & Consensus Platform
 
-This folder contains the minimal documents to go from idea → plan → implementation.
+From idea → plan → implementation.
 
 ## 📋 Document Workflow (Sequential Gates)
 
