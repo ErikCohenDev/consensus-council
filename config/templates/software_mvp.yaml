@@ -1,0 +1,253 @@
+# Project Template: Software MVP
+# This template defines auditor questions and focus areas for typical software MVPs
+
+project_info:
+  name: "Software MVP Template"
+  description: "Standard template for software product MVPs"
+  stages: ["research_brief", "market_scan", "vision", "prd", "architecture", "implementation_plan"]
+  
+# Human review configuration by stage
+human_review_policy:
+  research_brief:
+    required: true
+    rationale: "Problem validation and research approach require human judgment"
+    key_decisions: ["problem definition", "research methodology", "success criteria"]
+    
+  market_scan:
+    required: true  
+    rationale: "Build vs buy decisions and market positioning are strategic choices"
+    key_decisions: ["competitive positioning", "build vs buy", "market opportunity"]
+    
+  vision:
+    required: true
+    rationale: "Product vision and strategic direction require human leadership"
+    key_decisions: ["target users", "value proposition", "MVP scope", "success metrics"]
+    
+  prd:
+    required: true
+    rationale: "Business requirements and user needs require human product judgment"
+    key_decisions: ["feature prioritization", "user stories", "acceptance criteria"]
+    
+  architecture:
+    required: false  # Can auto-approve if consensus is high
+    rationale: "Technical architecture decisions can be automated if auditors agree"
+    human_triggers: ["security concerns", "scalability risks", "major technology choices"]
+    
+  implementation_plan:
+    required: false  # Can auto-approve if consensus is high  
+    rationale: "Implementation planning is largely technical execution"
+    human_triggers: ["resource constraints", "timeline risks", "dependency issues"]
+
+# Stage-specific auditor configurations
+auditor_questions:
+  research_brief:
+    pm:
+      focus_areas: ["problem_validation", "market_opportunity", "user_needs"]
+      key_questions:
+        - "Is the problem clearly articulated and validated?"
+        - "Are user needs and pain points specific and measurable?"
+        - "Is the market opportunity quantified with credible sources?"
+        - "Are success criteria for research phase defined?"
+        - "Is the research methodology sound and comprehensive?"
+      
+    data_eval:
+      focus_areas: ["research_methodology", "data_requirements", "validation_approach"]
+      key_questions:
+        - "Is the research methodology scientifically sound?"
+        - "Are data collection methods appropriate and unbiased?"
+        - "How will we validate research findings?"
+        - "Are sample sizes and selection criteria adequate?"
+        - "Is there a plan for quantifying research outcomes?"
+
+  market_scan:
+    pm:
+      focus_areas: ["competitive_analysis", "market_positioning", "build_vs_buy"]
+      key_questions:
+        - "Are at least 5 direct competitors analyzed thoroughly?"
+        - "Is our differentiation clear and defensible?"
+        - "Is the BUILD vs BUY vs PARTNER decision well-justified?"
+        - "Are pricing strategies based on competitive analysis?"
+        - "Is the go-to-market approach realistic?"
+        
+    cost:
+      focus_areas: ["market_economics", "pricing_analysis", "investment_requirements"]
+      key_questions:
+        - "Are market size estimates realistic and sourced?"
+        - "Is competitive pricing analysis comprehensive?"
+        - "Are investment requirements clearly quantified?"
+        - "Is the ROI case compelling and realistic?"
+        - "Are cost risks and mitigations identified?"
+        
+    data_eval:
+      focus_areas: ["market_research_quality", "competitive_intelligence", "decision_framework"]
+      key_questions:
+        - "Are market research sources credible and recent?"
+        - "Is competitive analysis based on primary research?"
+        - "Is the decision framework objective and criteria-based?"
+        - "Are assumptions clearly stated and validated?"
+        - "Is there sufficient evidence for conclusions?"
+
+  vision:
+    pm:
+      focus_areas: ["product_strategy", "user_value", "success_metrics"]
+      key_questions:
+        - "Is the value proposition clear and compelling?"
+        - "Are target users and use cases specific?"
+        - "Are success metrics quantified and achievable?"
+        - "Is MVP scope realistic for timeline and resources?"
+        - "Is differentiation from alternatives clear?"
+        
+    ux:
+      focus_areas: ["user_experience", "usability", "user_journey"]
+      key_questions:
+        - "Is the user journey clearly mapped and intuitive?"
+        - "Are usability considerations addressed early?"
+        - "Is the user experience differentiated and compelling?"
+        - "Are accessibility requirements considered?"
+        - "Is user feedback collection planned?"
+        
+    cost:
+      focus_areas: ["business_model", "unit_economics", "resource_requirements"]
+      key_questions:
+        - "Is the business model viable and scalable?"
+        - "Are unit economics realistic and attractive?"
+        - "Are resource requirements accurately estimated?"
+        - "Is the cost structure sustainable?"
+        - "Are monetization strategies clearly defined?"
+
+  prd:
+    pm:
+      focus_areas: ["requirements_clarity", "acceptance_criteria", "prioritization"]
+      key_questions:
+        - "Are all requirements testable and measurable?"
+        - "Is prioritization clearly justified (MoSCoW)?"
+        - "Are acceptance criteria specific and unambiguous?"
+        - "Is scope creep protection built in?"
+        - "Are dependencies and risks identified?"
+        
+    ux:
+      focus_areas: ["user_requirements", "interaction_design", "usability_requirements"]
+      key_questions:
+        - "Are user stories complete and well-formed?"
+        - "Are interaction patterns consistent and intuitive?"
+        - "Are usability requirements specific and measurable?"
+        - "Is accessibility compliance addressed?"
+        - "Are edge cases and error states considered?"
+        
+    cost:
+      focus_areas: ["resource_estimation", "cost_constraints", "roi_validation"]
+      key_questions:
+        - "Are development cost estimates realistic?"
+        - "Are operational cost implications considered?"
+        - "Is the ROI case still valid with detailed requirements?"
+        - "Are cost optimization opportunities identified?"
+        - "Is budget risk acceptable and mitigated?"
+
+  architecture:
+    infrastructure:
+      focus_areas: ["scalability", "reliability", "performance", "operations"]
+      key_questions:
+        - "Can the architecture scale to expected load?"
+        - "Are reliability and availability requirements met?"
+        - "Are performance SLOs realistic and achievable?"
+        - "Is operational complexity manageable?"
+        - "Are infrastructure costs optimized?"
+        
+    security:
+      focus_areas: ["threat_modeling", "security_controls", "compliance", "privacy"]
+      key_questions:
+        - "Is threat modeling comprehensive and current?"
+        - "Are security controls appropriate for risk level?"
+        - "Are compliance requirements addressed?"
+        - "Are privacy protections sufficient?"
+        - "Is security monitoring and incident response planned?"
+        
+    data_eval:
+      focus_areas: ["data_architecture", "analytics", "ml_readiness", "quality"]
+      key_questions:
+        - "Is data architecture scalable and maintainable?"
+        - "Are analytics and measurement strategies defined?"
+        - "Is ML/AI integration approach sound (if applicable)?"
+        - "Are data quality controls implemented?"
+        - "Is data governance framework adequate?"
+
+  implementation_plan:
+    pm:
+      focus_areas: ["project_management", "milestone_planning", "risk_management"]
+      key_questions:
+        - "Are tasks properly estimated and sequenced?"
+        - "Are milestones realistic and valuable?"
+        - "Are risks identified with mitigation plans?"
+        - "Is team capacity and skills adequate?"
+        - "Are dependencies managed effectively?"
+        
+    infrastructure:
+      focus_areas: ["technical_feasibility", "implementation_approach", "testing_strategy"]
+      key_questions:
+        - "Is the implementation approach technically sound?"
+        - "Are technical risks identified and mitigated?"
+        - "Is the testing strategy comprehensive?"
+        - "Are performance benchmarks defined?"
+        - "Is deployment strategy reliable?"
+        
+    security:
+      focus_areas: ["secure_development", "security_testing", "deployment_security"]
+      key_questions:
+        - "Are secure development practices integrated?"
+        - "Is security testing planned throughout development?"
+        - "Are deployment security controls defined?"
+        - "Is security training planned for team?"
+        - "Are security reviews scheduled at key milestones?"
+        
+    data_eval:
+      focus_areas: ["measurement_implementation", "quality_assurance", "validation_testing"]
+      key_questions:
+        - "Are success metrics implementation planned?"
+        - "Is data quality monitoring implemented?"
+        - "Are A/B testing frameworks ready (if needed)?"
+        - "Is validation testing comprehensive?"
+        - "Are analytics dashboards planned?"
+        
+    ux:
+      focus_areas: ["design_implementation", "user_testing", "accessibility"]
+      key_questions:
+        - "Is design system implementation planned?"
+        - "Are user testing phases scheduled?"
+        - "Is accessibility testing integrated?"
+        - "Are user feedback collection mechanisms ready?"
+        - "Is design quality assurance process defined?"
+        
+    cost:
+      focus_areas: ["budget_management", "cost_tracking", "optimization"]
+      key_questions:
+        - "Is budget tracking and reporting planned?"
+        - "Are cost optimization opportunities identified?"
+        - "Is financial risk monitoring implemented?"
+        - "Are cost-benefit validations scheduled?"
+        - "Is pricing strategy implementation ready?"
+
+# Template-specific scoring adjustments
+scoring_weights:
+  # Weight adjustments for different auditor types by stage
+  research_brief:
+    pm: 1.5        # PM perspective more important in research
+    data_eval: 1.3 # Data validation critical
+    
+  market_scan:
+    pm: 1.4
+    cost: 1.3      # Business case validation important
+    
+  vision:
+    pm: 1.3
+    ux: 1.2        # User experience critical for vision
+    
+  prd:
+    pm: 1.2        # All perspectives important, slight PM weight
+    ux: 1.1
+    
+  architecture:
+    infrastructure: 1.4  # Technical perspectives more critical
+    security: 1.3
+    
+  implementation_plan:
+    # Equal weights - all perspectives critical for implementation

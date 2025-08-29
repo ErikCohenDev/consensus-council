@@ -1,0 +1,16 @@
+# Hardware Product Template (Stub)
+project_info:
+  name: "Hardware Product Template"
+  description: "Template for hardware product development"
+  stages: ["research_brief", "market_scan", "vision", "prd", "architecture", "implementation_plan"]
+
+human_review_policy:
+  research_brief: { required: true }
+  market_scan: { required: true }
+  vision: { required: true }
+  prd: { required: true }
+  architecture: { required: true }
+  implementation_plan: { required: false }
+
+auditor_questions: {}
+scoring_weights: {}

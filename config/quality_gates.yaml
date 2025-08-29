@@ -1,0 +1,135 @@
+# Quality Gates Configuration for LLM Council
+# This file defines thresholds and behavior for document promotion gates
+
+# Consensus scoring thresholds for each stage transition
+consensus_thresholds:
+  research_brief_to_market_scan:
+    score_threshold: 3.5
+    approval_threshold: 0.6  # 60% of auditors must approve
+    alignment_threshold: 4.0
+    required_auditors: ["pm", "data_eval"]  # Only PM and Data/Eval for research phase
+    
+  market_scan_to_vision:
+    score_threshold: 3.8
+    approval_threshold: 0.67
+    alignment_threshold: 4.0
+    required_auditors: ["pm", "cost", "data_eval"]  # Business-focused auditors
+    
+  vision_to_prd:
+    score_threshold: 3.8
+    approval_threshold: 0.67
+    alignment_threshold: 4.0
+    required_auditors: ["pm", "ux", "cost"]  # User and business focused
+    
+  prd_to_architecture:
+    score_threshold: 4.0
+    approval_threshold: 0.67
+    alignment_threshold: 4.2
+    required_auditors: ["infrastructure", "security", "data_eval"]  # Technical focused
+    
+  architecture_to_implementation:
+    score_threshold: 4.0
+    approval_threshold: 0.75  # Higher bar for final implementation
+    alignment_threshold: 4.5
+    required_auditors: ["pm", "infrastructure", "security", "data_eval", "ux", "cost"]  # All auditors
+
+# Auditor configuration
+auditor_config:
+  # Available auditor roles
+  available_roles: 
+    - "pm"
+    - "infrastructure" 
+    - "data_eval"
+    - "security"
+    - "ux"
+    - "cost"
+    
+  # Execution settings
+  parallel_execution: true
+  timeout_seconds: 60
+  max_retries: 3
+  retry_delay_seconds: 2
+  
+  # Cost controls
+  max_tokens_per_auditor: 4000
+  max_total_calls_per_run: 50
+
+# Blocking issue severity gates
+blocking_severity_gates:
+  critical: 0     # No critical issues allowed to pass
+  high: 2         # Max 2 high severity issues allowed
+  medium: 5       # Max 5 medium severity issues allowed
+  low: 10         # Max 10 low severity issues allowed
+
+# Consensus algorithm settings
+consensus_algorithm:
+  method: "trimmed_mean"  # Options: "mean", "trimmed_mean", "median"
+  trim_percentage: 0.1    # Remove top/bottom 10% for trimmed_mean
+  disagreement_threshold: 1.0  # Std dev threshold requiring human review
+  max_consensus_attempts: 3    # Max attempts before requiring human input
+  
+# Human review triggers
+human_review_config:
+  # Always require human review for these stages (strategic decisions)
+  always_require_human:
+    - "research_brief"
+    - "market_scan" 
+    - "vision"
+    - "prd"  # Business logic and user requirements need human judgment
+    
+  # Auto-approve these stages if consensus is clear (technical implementation)
+  auto_approve_if_consensus:
+    - "architecture"
+    - "implementation_plan"
+    
+  # Trigger human review conditions
+  triggers:
+    low_consensus: 
+      enabled: true
+      threshold: 1.0  # Standard deviation threshold
+      message: "Auditors have significant disagreement. Human review required."
+      
+    blocking_issues:
+      enabled: true
+      critical_threshold: 0  # Any critical issues trigger review
+      high_threshold: 3      # More than 3 high severity issues
+      
+    strategic_tradeoffs:
+      enabled: true
+      keywords: ["tradeoff", "alternative", "risk", "assumption", "constraint"]
+      message: "Strategic tradeoffs detected. Human judgment required."
+      
+    alignment_mismatch:
+      enabled: true
+      threshold: 3.5  # Alignment score below this triggers review
+      
+    new_information:
+      enabled: true
+      message: "Consider if additional context would help resolve disagreements."
+  
+# Output settings
+output_config:
+  generate_artifacts: true
+  artifact_retention_days: 30
+  include_individual_audits: true
+  include_consensus_details: true
+  
+# Model configuration
+model_config:
+  default_provider: "openai"
+  models:
+    openai:
+      model: "gpt-4o"
+      temperature: 0.1
+      max_tokens: 4000
+    anthropic:
+      model: "claude-3-5-sonnet-20241022"  
+      temperature: 0.1
+      max_tokens: 4000
+      
+# Cache configuration
+cache_config:
+  enabled: true
+  cache_dir: ".cache/audits"
+  ttl_hours: 24
+  hash_algorithm: "sha256"

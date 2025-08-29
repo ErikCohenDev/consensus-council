@@ -1,0 +1,16 @@
+# Service Business Template (Stub)
+project_info:
+  name: "Service Business Template"
+  description: "Template for service-based business development"
+  stages: ["research_brief", "market_scan", "vision", "prd", "architecture", "implementation_plan"]
+
+human_review_policy:
+  research_brief: { required: true }
+  market_scan: { required: true }
+  vision: { required: true }
+  prd: { required: true }
+  architecture: { required: false }
+  implementation_plan: { required: false }
+
+auditor_questions: {}
+scoring_weights: {}

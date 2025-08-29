@@ -1,0 +1,61 @@
+# Project Templates Registry
+# Add new project types here with their specific configurations
+
+templates:
+  software_mvp:
+    name: "Software Product MVP"
+    description: "Standard template for software product development"
+    config_file: "software_mvp.yaml"
+    use_cases:
+      - "SaaS products"
+      - "Mobile apps"
+      - "Web applications"
+      - "API services"
+      - "Developer tools"
+      
+  ai_ml_project:
+    name: "AI/ML Project"
+    description: "Template for AI/ML product development"
+    config_file: "ai_ml_project.yaml"
+    use_cases:
+      - "Machine learning models"
+      - "AI-powered features"
+      - "Data science projects"
+      - "LLM applications"
+      
+  hardware_product:
+    name: "Hardware Product"
+    description: "Template for hardware product development"
+    config_file: "hardware_product.yaml"
+    use_cases:
+      - "IoT devices"
+      - "Consumer electronics"
+      - "Industrial equipment"
+      
+  service_business:
+    name: "Service Business"
+    description: "Template for service-based business development"
+    config_file: "service_business.yaml"
+    use_cases:
+      - "Consulting services"
+      - "Professional services"
+      - "Marketplace platforms"
+      
+  research_project:
+    name: "Research Project"
+    description: "Template for research and experimental projects"
+    config_file: "research_project.yaml"
+    use_cases:
+      - "Academic research"
+      - "R&D projects"
+      - "Proof of concepts"
+      - "Experimental features"
+
+# Default template if none specified
+default_template: "software_mvp"
+
+# Template selection prompts
+selection_prompts:
+  - "What type of project are you working on?"
+  - "Which template best matches your project:"
+  - "Select a project template or press Enter for default (Software MVP):"

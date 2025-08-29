@@ -1,0 +1,16 @@
+# AI/ML Project Template (Stub)
+project_info:
+  name: "AI/ML Project Template"
+  description: "Template for AI/ML product development"
+  stages: ["research_brief", "market_scan", "vision", "prd", "architecture", "implementation_plan"]
+
+human_review_policy:
+  research_brief: { required: true }
+  market_scan: { required: true }
+  vision: { required: true }
+  prd: { required: true }
+  architecture: { required: false }
+  implementation_plan: { required: false }
+
+auditor_questions: {}
+scoring_weights: {}
