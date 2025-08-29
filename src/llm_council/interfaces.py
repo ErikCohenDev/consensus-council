@@ -15,16 +15,16 @@ from .schemas import AuditorResponse
 
 class IAuditorProvider(Protocol):
     """Interface for audit providers (different LLM implementations)."""
-    
+
     async def execute_audit(self, prompt: str, stage: str) -> AuditorResponse:
         """Execute audit and return structured response."""
         ...
-    
+
     @property
     def provider_name(self) -> str:
         """Get the provider name (e.g., 'openai', 'anthropic')."""
         ...
-    
+
     @property
     def model_name(self) -> str:
         """Get the specific model name."""
@@ -33,15 +33,15 @@ class IAuditorProvider(Protocol):
 
 class IConsensusEngine(Protocol):
     """Interface for consensus calculation algorithms."""
-    
+
     def calculate_consensus(
-        self, 
-        responses: List[AuditorResponse], 
+        self,
+        responses: List[AuditorResponse],
         weights: Optional[Dict[str, float]] = None
     ) -> Dict[str, Any]:
         """Calculate consensus from multiple auditor responses."""
         ...
-    
+
     def get_algorithm_name(self) -> str:
         """Get the name of the consensus algorithm."""
         ...
@@ -49,7 +49,7 @@ class IConsensusEngine(Protocol):
 
 class IAlignmentValidator(Protocol):
     """Interface for document alignment validation."""
-    
+
     def validate_alignment(
         self,
         source_content: str,
@@ -63,11 +63,11 @@ class IAlignmentValidator(Protocol):
 
 class IResearchProvider(Protocol):
     """Interface for research and context gathering."""
-    
+
     async def search(self, query: str, max_results: int = 5) -> Dict[str, Any]:
         """Search for information and return structured results."""
         ...
-    
+
     @property
     def provider_name(self) -> str:
         """Get the research provider name."""
@@ -76,15 +76,15 @@ class IResearchProvider(Protocol):
 
 class ICacheService(Protocol):
     """Interface for caching services."""
-    
+
     async def get(self, key: str) -> Optional[Any]:
         """Get cached value by key."""
         ...
-    
+
     async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
         """Set cached value with optional TTL."""
         ...
-    
+
     async def clear(self, pattern: Optional[str] = None) -> None:
         """Clear cache entries, optionally by pattern."""
         ...
@@ -92,11 +92,11 @@ class ICacheService(Protocol):
 
 class IDocumentLoader(Protocol):
     """Interface for document loading strategies."""
-    
+
     def load_documents(self, docs_path: Path) -> Dict[str, str]:
         """Load documents from the specified path."""
         ...
-    
+
     def get_supported_extensions(self) -> List[str]:
         """Get list of supported file extensions."""
         ...
@@ -104,11 +104,11 @@ class IDocumentLoader(Protocol):
 
 class INotificationService(Protocol):
     """Interface for real-time notifications and updates."""
-    
+
     async def notify_status_change(self, event_type: str, data: Dict[str, Any]) -> None:
         """Send notification about status changes."""
         ...
-    
+
     async def notify_error(self, error: Exception, context: Dict[str, Any]) -> None:
         """Send error notification."""
         ...
@@ -116,15 +116,15 @@ class INotificationService(Protocol):
 
 class IMetricsCollector(Protocol):
     """Interface for collecting performance and usage metrics."""
-    
+
     def record_audit_duration(self, duration: float, stage: str, provider: str) -> None:
         """Record audit execution duration."""
         ...
-    
+
     def record_cost(self, cost: float, provider: str, tokens_used: int) -> None:
         """Record cost and token usage."""
         ...
-    
+
     def get_metrics_summary(self) -> Dict[str, Any]:
         """Get summary of collected metrics."""
         ...
@@ -134,7 +134,7 @@ class IMetricsCollector(Protocol):
 
 class BaseAuditOrchestrator(ABC):
     """Base class for audit orchestrators."""
-    
+
     def __init__(
         self,
         auditor_provider: IAuditorProvider,
@@ -146,7 +146,7 @@ class BaseAuditOrchestrator(ABC):
         self.consensus_engine = consensus_engine
         self.cache_service = cache_service
         self.metrics_collector = metrics_collector
-    
+
     @abstractmethod
     async def execute_audit(self, stage: str, content: str) -> Dict[str, Any]:
         """Execute audit for a given stage and content."""
@@ -155,7 +155,7 @@ class BaseAuditOrchestrator(ABC):
 
 class BaseCouncilMember(ABC):
     """Base class for council members with pluggable providers."""
-    
+
     def __init__(
         self,
         role: str,
@@ -167,12 +167,12 @@ class BaseCouncilMember(ABC):
         self.auditor_provider = auditor_provider
         self.expertise_areas = expertise_areas
         self.personality = personality
-    
+
     @abstractmethod
     async def provide_review(self, document: str, stage: str) -> Dict[str, Any]:
         """Provide review of the document."""
         pass
-    
+
     @abstractmethod
     async def respond_to_peers(
         self,
@@ -186,12 +186,12 @@ class BaseCouncilMember(ABC):
 
 class BaseUIService(ABC):
     """Base class for UI services handling different aspects of the interface."""
-    
+
     @abstractmethod
     async def handle_event(self, event_type: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle UI events and return appropriate responses."""
         pass
-    
+
     @abstractmethod
     def get_service_name(self) -> str:
         """Get the service name for identification."""
@@ -202,15 +202,15 @@ class BaseUIService(ABC):
 
 class IConfigurationProvider(Protocol):
     """Interface for configuration providers."""
-    
+
     def get_config(self, key: str, default: Any = None) -> Any:
         """Get configuration value by key."""
         ...
-    
+
     def get_section(self, section: str) -> Dict[str, Any]:
         """Get entire configuration section."""
         ...
-    
+
     def reload(self) -> None:
         """Reload configuration from source."""
         ...
@@ -220,7 +220,7 @@ class IConfigurationProvider(Protocol):
 
 class IEventPublisher(Protocol):
     """Interface for event publishing."""
-    
+
     async def publish(self, event_type: str, data: Dict[str, Any]) -> None:
         """Publish an event."""
         ...
@@ -228,7 +228,7 @@ class IEventPublisher(Protocol):
 
 class IEventSubscriber(Protocol):
     """Interface for event subscription."""
-    
+
     async def subscribe(
         self,
         event_type: str,
@@ -236,7 +236,7 @@ class IEventSubscriber(Protocol):
     ) -> str:
         """Subscribe to event type and return subscription ID."""
         ...
-    
+
     async def unsubscribe(self, subscription_id: str) -> None:
         """Unsubscribe from events."""
         ...
@@ -246,7 +246,7 @@ class IEventSubscriber(Protocol):
 
 class IAuditorProviderFactory(Protocol):
     """Factory for creating auditor providers."""
-    
+
     def create_provider(
         self,
         provider_type: str,
@@ -255,7 +255,7 @@ class IAuditorProviderFactory(Protocol):
     ) -> IAuditorProvider:
         """Create auditor provider instance."""
         ...
-    
+
     def get_supported_providers(self) -> List[str]:
         """Get list of supported provider types."""
         ...
@@ -264,26 +264,26 @@ class IAuditorProviderFactory(Protocol):
 __all__ = [
     # Core interfaces
     "IAuditorProvider",
-    "IConsensusEngine", 
+    "IConsensusEngine",
     "IAlignmentValidator",
     "IResearchProvider",
     "ICacheService",
     "IDocumentLoader",
     "INotificationService",
     "IMetricsCollector",
-    
+
     # Base classes
     "BaseAuditOrchestrator",
     "BaseCouncilMember",
     "BaseUIService",
-    
+
     # Configuration
     "IConfigurationProvider",
-    
+
     # Event system
     "IEventPublisher",
     "IEventSubscriber",
-    
+
     # Factories
     "IAuditorProviderFactory",
 ]

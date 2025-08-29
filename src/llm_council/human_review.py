@@ -22,7 +22,7 @@ class ReviewTrigger:
     trigger_type: str
     description: str
     requires_review: bool
-    
+
     @classmethod
     def from_consensus_result(cls, stage: str, consensus_result) -> ReviewTrigger:
         """Create review trigger from consensus result."""
@@ -30,7 +30,7 @@ class ReviewTrigger:
             if consensus_result.agreement_level < 0.5:
                 return cls(
                     stage=stage,
-                    trigger_type="low_consensus", 
+                    trigger_type="low_consensus",
                     description=f"Low consensus (agreement: {consensus_result.agreement_level:.2f})",
                     requires_review=True
                 )
@@ -48,7 +48,7 @@ class ReviewTrigger:
             description="No review required",
             requires_review=False
         )
-    
+
     @classmethod
     def for_strategic_stage(cls, stage: str) -> ReviewTrigger:
         """Create trigger for strategic document stages."""
@@ -72,12 +72,12 @@ class ReviewTrigger:
 
 class HumanReviewInterface:
     """Interactive interface for human review of audit results."""
-    
+
     def __init__(self):
         """Initialize human review interface."""
         pass
-    
-    def should_trigger_review(self, stage: str, auditor_responses: List[Dict[str, Any]], 
+
+    def should_trigger_review(self, stage: str, auditor_responses: List[Dict[str, Any]],
                             consensus_result) -> bool:
         """Determine if human review should be triggered."""
         # Strategic documents always trigger review
@@ -101,8 +101,8 @@ class HumanReviewInterface:
                         return True
 
         return False
-    
-    def display_disagreement_summary(self, stage: str, auditor_responses: List[Dict[str, Any]], 
+
+    def display_disagreement_summary(self, stage: str, auditor_responses: List[Dict[str, Any]],
                                    consensus_result) -> None:
         """Display summary of auditor disagreements."""
         click.echo("🚨 Human Review Required")
@@ -126,9 +126,9 @@ class HumanReviewInterface:
             role = response.get("auditor_role", "unknown")
             assessment = response.get("overall_assessment", {})
             pass_status = "✅ PASS" if assessment.get("overall_pass", False) else "❌ FAIL"
-    
+
             click.echo(f"• {role.upper()}: {pass_status}")
-    
+
                 # Show key concerns
             risks = assessment.get("top_risks", [])
             if risks:
@@ -136,7 +136,7 @@ class HumanReviewInterface:
 
         click.echo("━" * 45)
         click.echo("")
-    
+
     def format_auditor_summary(self, auditor_response: Dict[str, Any]) -> str:
         """Format detailed summary for individual auditor."""
         role = auditor_response.get("auditor_role", "unknown")
@@ -187,8 +187,8 @@ class HumanReviewInterface:
             lines.append("")
 
         return "\n".join(lines)
-    
-    def conduct_review(self, stage: str, auditor_responses: List[Dict[str, Any]], 
+
+    def conduct_review(self, stage: str, auditor_responses: List[Dict[str, Any]],
                       consensus_result) -> ReviewDecision:
         """Conduct interactive human review session."""
         # Display the disagreement summary
@@ -238,7 +238,7 @@ class HumanReviewInterface:
         elif choice == "2":
             changes = input("What changes will you make? ")
             return ReviewDecision(
-                action="REVISE", 
+                action="REVISE",
                 rationale=changes,
                 context_additions=[],
                 planned_changes=[changes]
@@ -269,8 +269,8 @@ class HumanReviewInterface:
                 context_additions=[],
                 planned_changes=[]
             )
-    
-    def generate_review_record(self, stage: str, decision: ReviewDecision, 
+
+    def generate_review_record(self, stage: str, decision: ReviewDecision,
                              auditor_responses: List[Dict[str, Any]]) -> str:
         """Generate markdown record of human review decision."""
         lines = [f"# Human Review Record - {stage.upper()}"]
@@ -293,7 +293,7 @@ class HumanReviewInterface:
 
         lines.append("## Auditor Summary")
         total_auditors = len(auditor_responses)
-        passing_auditors = sum(1 for r in auditor_responses 
+        passing_auditors = sum(1 for r in auditor_responses
                              if r.get("overall_assessment", {}).get("overall_pass", False))
 
         lines.append(f"- Total Auditors: {total_auditors}")

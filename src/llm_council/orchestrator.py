@@ -76,7 +76,7 @@ class AuditorWorker:
             cached_result = self.cache.get(cache_key)
             if cached_result:
                 return cached_result
-        
+
         last_err: Optional[Exception] = None
         for attempt in range(1, self.max_retries + 1):
             try:
@@ -101,12 +101,12 @@ class AuditorWorker:
                 # Basic schema sanity checks (role + stage presence)
                 if not isinstance(data, dict) or "auditor_role" not in data:
                     raise ValueError("Missing auditor_role in response JSON")
-                
+
                 # Store in cache if available
                 if self.cache:
                     cache_key = CacheKey.generate_from_content(self.model, template_content, prompt, document_content)
                     self.cache.set(cache_key, data)
-                
+
                 return data
             except (json.JSONDecodeError, ValueError, asyncio.TimeoutError, Exception) as err:  # noqa: BLE001
                 last_err = err
@@ -144,7 +144,7 @@ class AuditorOrchestrator:
 
         self._template_engine = TemplateEngine(template_path)
         self._client = AsyncOpenAI(api_key=api_key)
-        
+
         # Initialize cache if enabled
         if enable_cache and cache_dir:
             self._cache = AuditCache(cache_dir)
