@@ -85,16 +85,20 @@ class HumanReviewInterface:
         if strategic_trigger.requires_review:
             return True
 
-        # Low consensus or failed consensus triggers review
-        if hasattr(consensus_result, 'requires_human_review'):
-            return consensus_result.requires_human_review
+        # Low consensus or failed consensus triggers review (handle mocks safely)
+        requires_review_attr = getattr(consensus_result, 'requires_human_review', None)
+        if isinstance(requires_review_attr, bool):
+            return requires_review_attr
 
         # High severity blocking issues trigger review
-        for response in auditor_responses:
-            blocking_issues = response.get("blocking_issues", [])
-            for issue in blocking_issues:
-                if issue.get("severity") in ["critical", "high"]:
-                    return True
+        if isinstance(auditor_responses, list):
+            for response in auditor_responses:
+                if not isinstance(response, dict):
+                    continue
+                blocking_issues = response.get("blocking_issues", [])
+                for issue in blocking_issues:
+                    if isinstance(issue, dict) and issue.get("severity") in ["critical", "high"]:
+                        return True
 
         return False
     
@@ -162,6 +166,14 @@ class HumanReviewInterface:
             lines.append("⚠️ Concerns:")
             for risk in risks:
                 lines.append(f"  • {risk}")
+            lines.append("")
+
+        # Quick wins / improvements
+        quick_wins = assessment.get("quick_wins", [])
+        if quick_wins:
+            lines.append("💡 Quick Wins:")
+            for win in quick_wins:
+                lines.append(f"  • {win}")
             lines.append("")
 
         # Blocking issues
