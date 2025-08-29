@@ -40,18 +40,25 @@ flowchart LR
 
 ## 2) Data & Models
 
-- Model(s): default OpenAI structured outputs (swap-able).  
-- Templates: YAML configs per project type with auditor questions, weights, thresholds.
-- Artifacts: per-auditor JSON, `audit.md`, `consensus_<DOC>.md`, `decision_<STAGE>.md`, `alignment_backlog_<DOC>.md`.  
-- Hash key for cache: `(model, template_hash, prompt_hash, content_hash)`.
+**Multi-Model Ensemble Strategy:**
+- **Primary Models:** OpenAI GPT-4o, Anthropic Claude-3.5-Sonnet, Google Gemini-1.5-Pro
+- **Specialized Providers:** OpenRouter (access to Grok, other models), Tavily (research context)
+- **Model Assignment:** Different models per auditor role to maximize perspective diversity
+- **Consensus Method:** Cross-model disagreement analysis with perspective synthesis
+
+**Configuration:**
+- Templates: YAML configs per project type with model assignments per role
+- Artifacts: per-model-auditor JSON, `audit.md`, `consensus_<DOC>.md`, `decision_<STAGE>.md`, `alignment_backlog_<DOC>.md`
+- Cache key: `(provider, model, template_hash, prompt_hash, content_hash)` - now includes provider
 
 ## 3) Interfaces & Contracts
 
-- CLI: `audit.py <docs_dir> [--template] [--stage] [--model] [--max-calls] [--interactive]`.
-- Template Config: YAML defining auditor questions, weights, stage-specific requirements, and human review triggers.
-- Auditor schema: `scores_detailed{criterion→{score,pass,justification,improvements}}`, `blocking_issues[]`, `alignment_feedback{…}`.  
-- Human Review Interface: Interactive prompts with consensus summary, disagreement highlights, and context injection.
-- Exit codes: 0 success, 1 gate fail, 2 human review required.
+- CLI: `audit.py <docs_dir> [--template] [--stage] [--ensemble] [--research-context] [--interactive]`
+- Template Config: YAML defining auditor questions, model assignments per role, weights, and human review triggers
+- Auditor Schema: `scores_detailed{criterion→{score,pass,justification,improvements}}`, `blocking_issues[]`, `model_perspective{unique_insights,model_bias_flags}`
+- Multi-Model Response: Each auditor includes `model_provider` and `perspective_confidence` for diversity analysis
+- Human Review Interface: Interactive prompts with cross-model disagreement analysis and perspective synthesis
+- Exit codes: 0 success, 1 gate fail, 2 human review required, 3 model ensemble failure
 
 ## 4) Scaling & Performance
 - Parallel auditor calls (configurable N).  

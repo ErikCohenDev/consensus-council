@@ -531,3 +531,119 @@ class TestCLIIntegration:
         assert "Consensus Analysis" in consensus_content
         assert "PASS" in consensus_content
         assert "4.1" in consensus_content
+
+
+class TestResearchAgentIntegration:
+    """Test research agent integration for internet context gathering."""
+    
+    @patch('llm_council.cli.AuditorOrchestrator')
+    @patch('llm_council.cli.ResearchAgent')  # Will implement this
+    def test_research_agent_vision_enhancement(self, mock_agent, mock_orchestrator, temp_dir):
+        """Test that research agent enhances vision with internet context."""
+        runner = CliRunner()
+        
+        # Setup test environment
+        docs_dir = temp_dir / "docs"
+        docs_dir.mkdir()
+        
+        template_config = {
+            "project_info": {"name": "Test", "description": "Test", "stages": ["vision"]},
+            "auditor_questions": {"vision": {"pm": {"focus_areas": [], "key_questions": ["Q1"]}}},
+            "scoring_weights": {},
+            "research_agent": {
+                "enabled": True,
+                "provider": "tavily",
+                "stages": ["vision"]
+            }
+        }
+        
+        template_file = temp_dir / "template.yaml"
+        with open(template_file, 'w') as f:
+            yaml.dump(template_config, f)
+        
+        # Create vision document
+        vision_doc = docs_dir / "VISION.md"
+        vision_doc.write_text("""# Vision
+        Build an AI-powered document review platform using multiple LLM auditors.
+        Target market: software development teams needing faster review cycles.
+        """)
+        
+        # Mock research agent response  
+        mock_agent_instance = Mock()
+        mock_agent.return_value = mock_agent_instance
+        
+        from llm_council.research_agent import ResearchContext
+        mock_context = ResearchContext(
+            market_trends=["AI development tools growing 45% YoY"],
+            competitors=["GitHub Copilot", "CodeRabbit"],
+            technical_insights=["Multi-agent systems gaining enterprise adoption"],
+            sources=["test-source.com"],
+            query_used="AI development tools",
+            timestamp="2025-08-29"
+        )
+        # Make gather_context async
+        async def async_gather_context(content, stage):
+            return mock_context
+        mock_agent_instance.gather_context.side_effect = async_gather_context
+        
+        # Mock the format_context_for_document method
+        def mock_format_context(context, content):
+            return content + f"\n\n## Research Context\n- {context.market_trends[0]}\n- Competitors: {', '.join(context.competitors)}"
+        
+        mock_agent_instance.format_context_for_document.side_effect = mock_format_context
+        
+        # Mock orchestrator
+        mock_orch_instance = AsyncMock()
+        mock_orchestrator.return_value = mock_orch_instance
+        
+        from llm_council.orchestrator import OrchestrationResult
+        from llm_council.consensus import ConsensusResult
+        
+        mock_result = OrchestrationResult(
+            success=True,
+            auditor_responses=[],
+            failed_auditors=[],
+            consensus_result=ConsensusResult(
+                weighted_average=4.0,
+                consensus_pass=True,
+                approval_pass=True,
+                final_decision="PASS",
+                agreement_level=0.9,
+                participating_auditors=["pm"],
+                failure_reasons=[],
+                requires_human_review=False
+            ),
+            execution_time=1.0
+        )
+        
+        mock_orch_instance.execute_stage_audit.return_value = mock_result
+        
+        # Run audit command with research agent
+        with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key', 'TAVILY_API_KEY': 'test-key'}):
+            result = runner.invoke(cli, [
+                'audit',
+                str(docs_dir),
+                '--stage', 'vision',
+                '--template', str(template_file),
+                '--research-context'  # New flag to enable research agent
+            ])
+        
+        # Debug: print CLI result
+        print("CLI Result:", result.output)
+        print("CLI Exit Code:", result.exit_code)
+        
+        # Verify research agent was called
+        assert mock_agent.called, "ResearchAgent should be instantiated"
+        assert mock_agent_instance.gather_context.called, "gather_context should be called"
+        
+        # Verify enhanced document was passed to orchestrator
+        call_args = mock_orch_instance.execute_stage_audit.call_args
+        if call_args:
+            enhanced_content = call_args[0][1]  # document_content argument
+            print("Enhanced content:", repr(enhanced_content))
+            
+            # Should contain original content plus research context
+            assert "AI-powered document review platform" in enhanced_content
+            assert ("AI development tools growing 45% YoY" in enhanced_content or 
+                   "GitHub Copilot" in enhanced_content or
+                   "Research Context" in enhanced_content)

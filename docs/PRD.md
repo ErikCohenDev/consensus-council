@@ -27,7 +27,7 @@
 | ID        | Requirement (must/should)                                                                   | Rationale                              | Priority | Acceptance Criteria (testable)                                                  | Metric/Target |
 | --------- | ------------------------------------------------------------------------------------------- | -------------------------------------- | -------- | ------------------------------------------------------------------------------- | ------------- |
 | R-PRD-001 | CLI accepts 4 markdown docs (Vision/PRD/Arch/Impl Plan)                                     | Single-step usage                      | M        | `python audit.py ./docs` produces outputs without manual prompts                | ✅ no errors   |
-| R-PRD-002 | Run N role auditors in parallel (PM, Infra, Data/Eval, Security, UX, Cost)                  | Multi-perspective                      | M        | Each auditor returns valid JSON per schema                                      | ≥99% valid    |
+| R-PRD-002 | Run N role auditors in parallel with diverse models (PM→GPT-4o, Security→Claude, Data→Gemini) | Multi-perspective + model diversity    | M        | Each auditor returns valid JSON with model_provider field                       | ≥99% valid    |
 | R-PRD-003 | Produce `audit.md` with Executive Summary, Top Risks, Quick Wins, Per-Doc findings          | Readability                            | M        | Sections present; >= 5 unique findings on typical drafts                        | ≥5 findings   |
 | R-PRD-004 | Consensus: weighted rubric + approvals; output `consensus_<DOC>.md`                         | Deterministic promotion                | M        | Weighted ≥ threshold & approvals ≥ 2/3 for PASS                                 | pass logic ok |
 | R-PRD-005 | Gate evaluation writes `decision_<STAGE>.md`                                                | Traceability                           | M        | PASS/FAIL + reasons + thresholds shown                                          | file exists   |
@@ -38,6 +38,8 @@
 | R-PRD-010 | Research pre-gate: `RESEARCH_BRIEF.md` + `MARKET_SCAN.md` → must PASS before Vision         | Avoid building wrong thing             | M        | ≥5 credible sources; ≥3 alternatives; explicit Build/Buy/Partner/Defer decision | pass logic ok |
 | R-PRD-011 | Human review interface for strategic docs (Research, Market, Vision, PRD) and low consensus | Human judgment for strategic decisions | M        | Interactive prompts with disagreement summary and context injection             | UI exists     |
 | R-PRD-012 | Consensus deadlock resolution: max 3 attempts before human escalation                       | Prevent infinite audit loops           | M        | After 3 consensus attempts, trigger human review with full context              | escalation ok |
+| R-PRD-013 | Multi-model ensemble: assign different LLMs to auditor roles for perspective diversity      | Maximize insight variety + reduce bias | S        | PM→OpenAI, Security→Claude, Data→Gemini, etc. with cross-model consensus        | model diversity |
+| R-PRD-014 | Model perspective analysis: detect unique insights and bias patterns per provider           | Optimize model selection + learning    | S        | Track which models find which types of issues; diversity scoring ≥0.7           | insight tracking |
 
 ## 4) Non-Functional Requirements (NFRs)
 
@@ -60,11 +62,40 @@
 - OpenAI (swap-able); Python 3.10+; optional LangGraph later.
 - Risk: schema drift → validation + retries.
 
-## 7) Release Plan (MVP → v1)
+## 7) MVP Delivery Strategy & Scope Control
 
-- M1: CLI + auditors + `audit.md` + caching.
-- M2: consensus + gates + alignment backlog.
-- M3: research pre-gate + examples + smoke tests.
+### M1: Core Foundation (Week 1-2) - **Absolute Basic Value**
+**Goal:** Single command that produces readable audit output
+- ✅ Basic CLI that ingests markdown docs (`audit.py ./docs`)
+- ✅ Single auditor execution with structured JSON output
+- ✅ Simple audit report generation (`audit.md`)
+- ✅ Pass/fail decision logic with clear thresholds
+- **Value Delivered:** Manual review replacement for single perspective
+
+### M2: Multi-LLM Council (Week 3-4) - **Core Differentiation**  
+**Goal:** Multi-perspective consensus that beats single AI
+- ✅ Parallel execution of 6 specialized auditors (PM, Infra, Data, Security, UX, Cost)
+- ✅ Consensus engine with trimmed mean algorithm and disagreement detection
+- ✅ Structured artifact generation (`consensus_<DOC>.md`, `decision_<STAGE>.md`)
+- ✅ Cost controls and caching for ≤$2 per run
+- **Value Delivered:** Multi-perspective analysis superior to single AI or human reviewer
+
+### M3: Document Pipeline (Week 5-6) - **Workflow Integration**
+**Goal:** Gated promotion across document lifecycle  
+- ✅ Full Vision → PRD → Architecture → Implementation workflow
+- ✅ Cross-document alignment validation with backlog generation
+- ✅ Quality gates with automated promotion decisions
+- 🔄 Human review interface for strategic decisions and deadlock resolution
+- **Value Delivered:** End-to-end document workflow with quality enforcement
+
+### Future Iterations (Post-MVP) - **Advanced Capabilities**
+**Captured for v2 to prevent scope creep:**
+- Research agent for internet context gathering in vision stage
+- Iterative LLM-to-LLM refinement loops with concrete question generation
+- Advanced revision strategies for automatic document improvement
+- Web UI and real-time collaboration features
+- Multi-repo integration and PR automation
+- Advanced analytics and learning from feedback patterns
 
 ### Gate checklist (PRD → Architecture)
 

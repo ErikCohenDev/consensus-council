@@ -21,9 +21,11 @@ Generate concise, evidence-anchored audits of product docs (Vision → PRD → A
 
 ## 4) Value & differentiation
 
-- Multi-model, role-based **council** with a **rubric** (simplicity, concision, actionability, readability, options/tradeoffs, evidence/specificity).
-- **Consensus math** + **alignment back-prop**: only advance when docs align.
-- Small, automatable CLI; caching; cost caps.
+- **Multi-model ensemble council**: Different LLMs (OpenAI, Claude, Gemini, Grok) per auditor role to maximize perspective diversity and reduce single-model bias
+- **Cross-model consensus**: Models can learn from each other's insights through disagreement analysis and perspective synthesis  
+- **Role-based specialization** with **rubric** (simplicity, concision, actionability, readability, options/tradeoffs, evidence/specificity)
+- **Consensus math** + **alignment back-prop**: only advance when docs align across all models
+- Small, automatable CLI; caching; cost caps; research agent integration
 
 ## 5) MVP scope
 

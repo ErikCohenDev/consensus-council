@@ -235,3 +235,101 @@ class TestAlignmentValidator:
         
         for expected in expected_pairs:
             assert expected in stage_pairs
+    
+    def test_validate_missing_research_brief(self):
+        """Test validation when research brief is missing."""
+        validator = AlignmentValidator()
+        
+        # Missing research brief should cause market_scan alignment to fail
+        documents = {
+            "research_brief": "",  # Empty/missing
+            "market_scan": "# Market Scan\nCompetitive analysis shows CLI tools are viable.",
+        }
+        
+        results = validator.validate_document_chain(documents)
+        research_to_market = [r for r in results if r.source_stage == "research_brief"][0]
+        
+        assert not research_to_market.is_aligned
+        assert "missing" in research_to_market.misalignments[0].lower()
+        assert "research_brief" in research_to_market.misalignments[0]
+    
+    def test_validate_research_brief_content_requirements(self):
+        """Test that research brief validates required content for market scan."""
+        validator = AlignmentValidator()
+        
+        # Research brief should validate methodology and sources
+        incomplete_research = "# Research\nSome basic problem analysis."
+        complete_research = """# Research Brief
+        ## Problem Analysis
+        Document review processes are manual and inconsistent.
+        
+        ## Methodology
+        Primary research: 20 founder interviews
+        Secondary research: Market analysis reports
+        
+        ## Key Sources
+        - Developer productivity survey (Stack Overflow 2024)
+        - Code review automation study (GitHub)
+        - Enterprise workflow analysis (Forrester)
+        """
+        
+        market_content = "# Market Scan\nCompetitive analysis shows opportunity."
+        
+        # Test incomplete research brief
+        result1 = validator.validate_alignment("research_brief", "market_scan", incomplete_research, market_content)
+        # Should pass basic validation since both docs exist
+        assert result1.is_aligned
+        
+        # Test complete research brief 
+        result2 = validator.validate_alignment("research_brief", "market_scan", complete_research, market_content)
+        assert result2.is_aligned
+    
+    def test_validate_prd_mvp_versioning(self):
+        """Test that PRD includes clear MVP delivery checkpoints."""
+        validator = AlignmentValidator()
+        
+        vision_content = """# Vision
+        Build CLI audit tool with multi-LLM consensus for document quality gates.
+        MVP scope: basic auditing with 4 docs and simple consensus.
+        """
+        
+        # PRD without MVP versioning should suggest adding it
+        prd_no_versions = """# PRD
+        ## Requirements
+        R-001: CLI interface for document auditing
+        R-002: Multi-LLM auditor council with consensus
+        """
+        
+        # PRD with clear MVP versioning
+        prd_with_versions = """# PRD
+        ## MVP Delivery Strategy
+        
+        ### M1: Core Foundation (Week 1-2)
+        - Basic CLI that ingests markdown docs
+        - Single auditor execution with JSON output
+        - Simple pass/fail decision
+        
+        ### M2: Multi-LLM Council (Week 3-4)  
+        - Parallel execution of 6 specialized auditors
+        - Consensus engine with trimmed mean algorithm
+        - Human review interface for disagreements
+        
+        ### M3: Document Pipeline (Week 5-6)
+        - Full Vision → PRD → Architecture workflow
+        - Cross-document alignment validation
+        - Quality gates with automated promotion
+        
+        ### Future Iterations (Post-MVP)
+        - Research agent for internet context gathering
+        - Iterative LLM-to-LLM refinement loops
+        - Advanced revision strategies
+        """
+        
+        # Test that MVP versioning improves alignment
+        result1 = validator.validate_alignment("vision", "prd", vision_content, prd_no_versions)
+        result2 = validator.validate_alignment("vision", "prd", vision_content, prd_with_versions)
+        
+        # Both should align, but versioned should have better score
+        assert result1.is_aligned
+        assert result2.is_aligned
+        assert result2.alignment_score >= result1.alignment_score

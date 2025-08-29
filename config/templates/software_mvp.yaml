@@ -5,6 +5,35 @@ project_info:
   name: "Software MVP Template"
   description: "Standard template for software product MVPs"
   stages: ["research_brief", "market_scan", "vision", "prd", "architecture", "implementation_plan"]
+
+# Multi-model ensemble configuration for perspective diversity
+model_ensemble:
+  enabled: true
+  model_assignments:
+    pm: 
+      provider: "openai"
+      model: "gpt-4o"
+      rationale: "Strong business reasoning and structured output"
+    security:
+      provider: "anthropic" 
+      model: "claude-3-5-sonnet-20241022"
+      rationale: "Excellent security analysis and risk assessment"
+    data_eval:
+      provider: "google"
+      model: "gemini-1.5-pro"
+      rationale: "Strong analytical capabilities and data insights"
+    infrastructure:
+      provider: "openrouter"
+      model: "x-ai/grok-beta"
+      rationale: "Unique technical perspective and system thinking"
+    ux:
+      provider: "openai"
+      model: "gpt-4o-mini"
+      rationale: "Cost-effective for UX feedback generation"
+    cost:
+      provider: "anthropic"
+      model: "claude-3-haiku-20240307"
+      rationale: "Fast and cost-effective for financial analysis"
   
 # Human review configuration by stage
 human_review_policy:

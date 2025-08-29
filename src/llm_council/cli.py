@@ -15,6 +15,8 @@ import click
 
 from .orchestrator import AuditorOrchestrator, OrchestrationResult
 from .alignment import AlignmentValidator
+from .pipeline import PipelineOrchestrator, RevisionStrategy
+from .research_agent import ResearchAgent
 
 
 DOCUMENT_STAGE_MAPPING = {
@@ -143,6 +145,7 @@ def cli():  # noqa: D401 - simple Click entrypoint
 @click.option("--model", default="gpt-4o", show_default=True, help="Model name")
 @click.option("--api-key", envvar="OPENAI_API_KEY", help="OpenAI API key (or set OPENAI_API_KEY env var)")
 @click.option("--interactive", is_flag=True, help="Enable interactive mode (future)")
+@click.option("--research-context", is_flag=True, help="Enable research agent for internet context gathering")
 @click.option("--no-cache", is_flag=True, help="Disable caching for debugging")
 @click.option("--cache-dir", type=click.Path(path_type=Path), help="Custom cache directory (default: .cache)")
 def audit_cmd(
@@ -153,6 +156,7 @@ def audit_cmd(
     model: str,
     api_key: Optional[str],
     interactive: bool,
+    research_context: bool,
     no_cache: bool,
     cache_dir: Optional[Path],
 ):
@@ -179,6 +183,15 @@ def audit_cmd(
             err=True,
         )
     document_content = documents.get(stage, "")
+
+    # Enhance with research context if enabled
+    if research_context:
+        try:
+            research_agent = ResearchAgent(provider="tavily", enabled=True)
+            context = asyncio.run(research_agent.gather_context(document_content, stage))
+            document_content = research_agent.format_context_for_document(context, document_content)
+        except Exception as e:
+            click.echo(f"Warning: Research agent failed: {e}", err=True)
 
     # Run orchestrator
     if not template_path:
@@ -242,3 +255,90 @@ def audit_cmd(
 
 
 __all__ = ["cli", "AuditCommand"]
+
+
+@cli.command(name="pipeline", help="Run a multi-stage gated pipeline (Vision → PRD → Architecture)")
+@click.argument("docs_path", type=click.Path(path_type=Path))
+@click.option("--template", "template_path", type=click.Path(path_type=Path), required=True)
+@click.option("--stages", default="vision,prd,architecture", show_default=True, help="Comma-separated stages")
+@click.option("--max-iters", default=1, type=int, show_default=True, help="Max pipeline iterations")
+@click.option("--model", default="gpt-4o", show_default=True, help="Model name")
+@click.option("--api-key", envvar="OPENAI_API_KEY", help="OpenAI API key (or set OPENAI_API_KEY env var)")
+@click.option("--no-cache", is_flag=True, help="Disable caching for debugging")
+@click.option("--cache-dir", type=click.Path(path_type=Path), help="Custom cache directory (default: .cache)")
+def pipeline_cmd(
+    docs_path: Path,
+    template_path: Path,
+    stages: str,
+    max_iters: int,
+    model: str,
+    api_key: Optional[str],
+    no_cache: bool,
+    cache_dir: Optional[Path],
+):
+    if not api_key:
+        raise click.UsageError(
+            "API key required - pass --api-key or set OPENAI_API_KEY env var"
+        )
+    if not docs_path.exists():
+        raise click.UsageError(f"Docs path does not exist: {docs_path}")
+
+    # Load documents
+    command = AuditCommand(
+        docs_path=docs_path,
+        template_path=template_path,
+        quality_gates_path=None,
+        model=model,
+        api_key=api_key,
+    )
+    documents = command.load_documents()
+
+    # Determine stage order
+    stage_list = [s.strip() for s in stages.split(",") if s.strip()]
+
+    # Set up cache directory
+    if cache_dir is None:
+        cache_dir = docs_path / ".cache"
+
+    orchestrator = PipelineOrchestrator(
+        template_path=template_path,
+        model=model,
+        api_key=api_key,
+        cache_dir=cache_dir if not no_cache else None,
+        enable_cache=not no_cache,
+    )
+
+    summary = orchestrator.run(
+        documents=documents,
+        stages=stage_list,
+        max_iterations=max_iters,
+        revision_strategy=RevisionStrategy(),  # No-op; plug in synthesis later
+        output_dir=docs_path,  # Drop per-iter summaries alongside docs
+    )
+
+    # Build final summary output
+    lines = ["=== PIPELINE SUMMARY ==="]
+    lines.append(f"Iterations: {summary.iterations}")
+    lines.append(f"Status: {'PASS' if summary.success else 'FAIL'}")
+    for stage, sr in summary.stage_results.items():
+        cr = sr.orchestration.consensus_result
+        decision = cr.final_decision if cr else "UNKNOWN"
+        score = f"{cr.weighted_average:.1f}" if cr else "-"
+        lines.append(f"{stage.upper()}: {decision} (Score {score})")
+
+    # Alignment status lines
+    misaligned = [ar for ar in summary.alignment_results if not ar.is_aligned]
+    if summary.alignment_results:
+        aligned_count = sum(1 for ar in summary.alignment_results if ar.is_aligned)
+        total = len(summary.alignment_results)
+        lines.append(f"Alignment: {aligned_count}/{total} PASS")
+        if misaligned:
+            lines.append("Misalignments:")
+            for ar in misaligned[:5]:
+                lines.append(f"- {ar.source_stage} → {ar.target_stage}: {ar.misalignments[0] if ar.misalignments else 'Unknown issue'}")
+
+    (docs_path / "pipeline_summary.md").write_text("\n".join(lines), encoding="utf-8")
+    click.echo("\n".join(lines))
+
+    if not summary.success:
+        raise SystemExit(1)
