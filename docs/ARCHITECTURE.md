@@ -16,7 +16,7 @@
 
 ## 1) High-Level Overview
 
-- **Components:** CLI Orchestrator, Council System, CouncilMember Objects, UniversalModelProvider (LiteLLM), DebateOrchestrator, ConsensusEngine, ResearchAgent (Tavily), AlignmentValidator, HumanReview Interface, Cache/Artifacts.
+- **Components:** CLI Orchestrator, Council System, CouncilMember Objects, UniversalModelProvider (LiteLLM), DebateOrchestrator, ConsensusEngine, ResearchAgent (Tavily), AlignmentValidator, HumanReview Interface, Cache/Artifacts, Web UI (Vite + React + TypeScript).
 
 ```mermaid
 flowchart LR
@@ -40,6 +40,16 @@ flowchart LR
   COUNCIL --> CACHE[(Cache)]
   TMPL --> CONFIG[(Template Config)]
 ```
+
+### Frontend (Web UI)
+
+- Vite + React + TypeScript for fast DX and end-to-end types
+- Zustand for app state, Zod for runtime validation, React Query for data
+- Shared types/schemas in `shared/types` and `shared/schemas` used by both FE/BE
+- Dev: Vite dev server on `:3000` with proxy to FastAPI (`/api`, `/ws`)
+- Prod: FastAPI serves `frontend/dist` at `/` and assets at `/assets`
+
+Note: The legacy inline React page (`/static/ui.js`) has been removed. The FastAPI server now serves the Vite build or a short “build the frontend” message if the build is missing.
 
 ## 2) Data & Models
 
@@ -106,6 +116,7 @@ flowchart LR
 - ADR-003: Start with custom orchestration + OpenAI structured outputs vs. LLM framework (CrewAI/LangGraph) for MVP to minimize complexity and maximize speed to market. Migrate to CrewAI for v2.
 - ADR-004: Template-driven configuration over hardcoded questions to enable rapid new project type creation.
 - ADR-005: Human-in-the-loop required for strategic documents (Vision/PRD) and consensus deadlocks. Automated decisions only for technical implementation docs.
+ - ADR-006: Remove unused legacy service layer and DI container for MVP. Keep implementation simple and focused on orchestrator + pipeline until service boundaries are needed by product requirements.
 
 ### Gate checklist (Architecture → Implementation)
 

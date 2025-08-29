@@ -75,3 +75,30 @@ Each document must pass consensus from our LLM council (PM, Infrastructure, Data
 
 > Keep each file brief. If a section is not applicable, write **N/A (why)** rather than leaving it blank.
 > Use markdown features (tables, task lists, code blocks) for clarity.
+
+## 🌐 Web UI
+
+Two ways to run the UI:
+
+- Development (recommended):
+  - Backend: `python -m src.llm_council.ui_server`
+  - Frontend: `cd frontend && npm install && npm run dev` (Vite dev server at `http://localhost:3000`, proxying `/api` and `/ws` to `http://localhost:8000`)
+
+- Production-like:
+  - Build: `cd frontend && npm install && npm run build`
+  - Start backend: `python -m src.llm_council.ui_server`
+  - The server serves `frontend/dist` automatically at `/` and assets at `/assets`.
+
+If `frontend/dist` is missing, the server shows a short message with setup instructions at `/`.
+
+## ✅ Testing & Coverage
+
+- Backend (pytest):
+  - `pytest --maxfail=1 --disable-warnings -q`
+  - With coverage: `pytest --cov=src/llm_council --cov-report=term-missing`
+
+- Frontend (Vitest):
+  - `cd frontend && npm run test`
+  - With coverage/UI: `npm run test:coverage` or `npm run test:ui`
+
+Targets: backend ≥85%, frontend ≥80%. See `docs/TEST_PLAN.md` and `docs/TRACEABILITY_MATRIX.md`.

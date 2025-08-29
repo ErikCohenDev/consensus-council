@@ -15,7 +15,9 @@
 
 **Non-Goals**
 
-- Rich web UI, full project mgmt, multi-repo integration (vNext).
+- Full project management and multi-repo automation (vNext).
+
+Note: A minimal Web UI for real-time visualization is provided for developer ergonomics. The CLI remains the primary interface for MVP requirements.
 
 ## 2) Personas & Primary Use Cases
 
@@ -94,7 +96,7 @@
 - Research agent for internet context gathering in vision stage
 - Iterative LLM-to-LLM refinement loops with concrete question generation
 - Advanced revision strategies for automatic document improvement
-- Web UI and real-time collaboration features
+- Rich Web UI and real-time collaboration features
 - Multi-repo integration and PR automation
 - Advanced analytics and learning from feedback patterns
 

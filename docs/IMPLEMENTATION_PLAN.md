@@ -5,30 +5,30 @@
 **Status:** Draft
 **Links:** [PRD](./PRD.md) • [Architecture](./ARCHITECTURE.md)
 
-## 0) Milestones & Status (COMPLETED ✅)
+## 0) Milestones & Status
 
-- **M1**: Core CLI + council members + multi-model LLM integration ✅ **DONE**
-- **M2**: Council debate system + consensus + alignment validation ✅ **DONE**
-- **M3**: Research agent + complete document pipeline + test coverage ✅ **DONE**
-- **BONUS**: LiteLLM integration + advanced council debate capabilities ✅ **DONE**
+- M1: Core CLI + council members + multi-model LLM integration — In progress
+- M2: Council debate system + consensus + alignment validation — In progress
+- M3: Research agent + gated document pipeline + tests — Planned
+- M4: Web UI (Vite + React + TS) + real-time updates — Initial scaffold complete
 
-## 1) Completed Implementation Summary
+## 1) Implementation Summary (current)
 
-**✅ Core Infrastructure** (124 tests passing)
+**Core Infrastructure**
 
 - CLI with audit, pipeline, research-context, council-debate commands
 - Document loading and stage mapping (Research → Market → Vision → PRD → Architecture → Implementation)
 - Template engine with YAML configuration and model assignments
 - Cache system with hash-based cost optimization
 
-**✅ Council Member System**
+**Council Member System**
 
 - CouncilMember objects with personalities, debate styles, and model assignments
 - Multi-round debate orchestration with peer response handling
 - Consensus emergence detection and disagreement analysis
 - Question generation for alignment resolution
 
-**✅ Multi-Model Ensemble via LiteLLM**
+**Multi-Model Ensemble via LiteLLM**
 
 - OpenAI (GPT-4o, GPT-4o-mini) for PM and UX roles
 - Anthropic (Claude-3.5-Sonnet, Claude-Haiku) for Security and Cost
@@ -36,7 +36,7 @@
 - OpenRouter (Grok) for Infrastructure perspective
 - UniversalModelProvider with provider-agnostic interface
 
-**✅ Advanced Features**
+**Advanced Features**
 
 - ResearchAgent with Tavily integration for internet context
 - Cross-document alignment validation with backlog generation
@@ -60,7 +60,7 @@ src/llm_council/
 ├── templates.py          # ✅ YAML template loading and validation
 └── schemas.py            # ✅ Pydantic models for structured outputs
 
-tests/                     # ✅ 124 tests passing
+tests/                     # tests evolving
 ├── test_council_members.py   # ✅ NEW: Council debate functionality
 ├── test_multi_model.py       # ✅ NEW: Multi-model ensemble tests
 ├── test_orchestrator.py      # ✅ Core orchestration
@@ -69,41 +69,66 @@ tests/                     # ✅ 124 tests passing
 └── test_cli.py              # ✅ CLI integration tests
 ```
 
-| T-008 | Gate evaluator + thresholds + `decision` | | R-PRD-005 | 1d | Todo |
-| T-009 | Alignment analyzer + backlog generator | | R-PRD-006 | 2d | Todo |
-| T-010 | Research pre-gate support + smoke tests | | R-PRD-010 | 2d | Todo |
-| T-011 | Human review interface + interactive CLI | | R-PRD-011 | 3d | Todo |
-| T-012 | Consensus deadlock detection + escalation | | R-PRD-012 | 1d | Todo |
+### Frontend/UI Tasks
 
-## 2) Quality & Evaluation Gates
+| ID       | Task                                                     | PRD Link     | Est. | Status |
+|----------|----------------------------------------------------------|--------------|------|--------|
+| FE-001   | Vite + React + TS scaffold, path aliases                 | N/A          | 0.5d | Done   |
+| FE-002   | Shared types/schemas wiring                              | NFR (Types)  | 0.5d | Done   |
+| FE-003   | WebSocket service (reconnect, queue, heartbeat, Zod)     | NFR (UI)     | 1d   | Done   |
+| FE-004   | Zustand store (connection/pipeline/council/notifications)| NFR (UI)     | 0.5d | Done   |
+| FE-005   | Hook: `useWebSocketConnection`                           | NFR (UI)     | 0.5d | Done   |
+| FE-006   | Layout + pages (Dashboard, Audit, Council, Pipeline)     | NFR (UI)     | 1d   | Done   |
+| FE-007   | Council debate visualization (rounds, consensus)         | R-PRD-015    | 1.5d | Todo   |
+| FE-008   | Error handling, toasts, logging                          | NFR (Reliab) | 0.5d | Todo   |
+| FE-009   | WS/Hook unit + integration tests                         | Quality      | 1d   | Todo   |
+| FE-010   | CI wiring for frontend tests/coverage                    | Quality      | 0.5d | Todo   |
+
+### Backend Tasks (selected)
+
+| ID       | Task                                         | PRD Link   | Est. | Status |
+|----------|----------------------------------------------|------------|------|--------|
+| T-BE-001 | Document loader + stage mapping               | R-PRD-001  | 0.5d | Done   |
+| T-BE-002 | Orchestrator workers + retry/timeout         | R-PRD-002  | 1.5d | WIP    |
+| T-BE-003 | Artifact generation (audit/consensus/decision)| R-PRD-003/4/5 | 1.5d | WIP    |
+| T-BE-004 | Consensus engine thresholds                   | R-PRD-004  | 1d   | WIP    |
+| T-BE-006 | Alignment validator + backlog                 | R-PRD-006  | 1d   | Done   |
+| T-BE-009 | Schema validation + retries                   | R-PRD-009  | 1d   | Done   |
+| T-BE-010 | Research agent integration                    | R-PRD-010  | 1d   | Planned|
+| T-BE-011 | Human review CLI flow                         | R-PRD-011  | 1d   | Planned|
+| T-BE-012 | Deadlock detection                            | R-PRD-012  | 0.5d | Planned|
+
+## 3) Quality & Evaluation Gates
 
 - **Offline**: schema validity ≥99%; consensus repeatable; gate verdict stable with identical inputs.
 - **Online**: 80% of human spot-checks judge Top Risks useful.
 - **DoD**: docs updated; tests passing; examples packaged; `--max-calls` guard working.
 
-## 3) Security & Privacy Tasks
+## 4) Security & Privacy Tasks
 
 - Env-based secrets; redact logs; document no-PII expectation.
 - Optional: artifact retention policy.
 
-## 4) Observability Tasks
+## 5) Observability Tasks
 
 - Token/time counters; write per-node summaries; simple logs.
 
-## 5) Performance & Scalability Tasks
+## 6) Performance & Scalability Tasks
 
 - Parallelism config; chunking; cache effectiveness metric.
 
-## 6) Readiness & Runbooks
+## 7) Readiness & Runbooks
 
 - README updates; usage examples; troubleshooting (“bad JSON” fixes).
 - Release notes; version tag.
 
-## 7) Risks, Dependencies, Open Items
+## 8) Risks, Dependencies, Open Items
 
 - Model or API changes; add fallback prompts/tests.
 
-## 8) Traceability Matrix
+## 9) Traceability & Tests
+
+See `docs/TRACEABILITY_MATRIX.md` and `docs/TEST_PLAN.md`.
 
 | Requirement | Architecture Component(s)     | Task(s)      | Status |
 | ----------- | ----------------------------- | ------------ | ------ |

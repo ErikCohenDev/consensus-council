@@ -134,49 +134,37 @@ current_pipeline_status = PipelineProgress(
     overall_status="idle"
 )
 
-# Prefer serving built Vite frontend if available; fallback to legacy static UI otherwise
+# Prefer serving built Vite frontend if available
 FRONTEND_DIST = (Path(__file__).resolve().parent.parent.parent / "frontend" / "dist")
 
 
 @app.get("/")
 async def index():
-    """Serve Vite build if present; otherwise legacy static UI."""
+    """Serve Vite build if present; otherwise show setup instructions."""
     if FRONTEND_DIST.exists():
         index_html = FRONTEND_DIST / "index.html"
         if index_html.exists():
             return FileResponse(index_html)
-    # Fallback legacy inline page referencing /static/ui.js
     return HTMLResponse(
         """
         <!DOCTYPE html>
         <html>
         <head>
-            <title>LLM Council Platform</title>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-            <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-            <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>LLM Council UI</title>
             <style>
-                .debug-border { border: 1px solid #e5e7eb; }
-                .status-pending { background-color: #fef3c7; color: #d97706; }
-                .status-in-progress { background-color: #dbeafe; color: #2563eb; }
-                .status-completed { background-color: #d1fae5; color: #059669; }
-                .status-failed { background-color: #fee2e2; color: #dc2626; }
-                .council-member { 
-                    transition: all 0.3s ease;
-                    border-left: 4px solid #e5e7eb;
-                }
-                .council-member.active { border-left-color: #2563eb; }
-                .council-member.speaking { border-left-color: #059669; }
-                .council-member.questioning { border-left-color: #d97706; }
+                body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; padding: 2rem; }
+                code { background: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 4px; }
             </style>
         </head>
-        <body class="bg-gray-50">
-            <div id="root"></div>
-            <script type="text/babel" src="/static/ui.js"></script>
+        <body>
+            <h1>Frontend not built</h1>
+            <p>
+                Run <code>npm run dev</code> in <code>frontend/</code> for development, or
+                <code>npm run build</code> to produce a production build. The server will automatically
+                serve <code>frontend/dist</code> when it exists.
+            </p>
         </body>
         </html>
         """
@@ -342,11 +330,6 @@ async def run_audit_with_ui_updates(audit_cmd: AuditCommand):
             "message": str(e)
         })
 
-
-# Static mounts
-static_path = Path(__file__).parent / "static"
-static_path.mkdir(exist_ok=True)
-app.mount("/static", StaticFiles(directory=str(static_path), html=True), name="static")
 
 # If Vite build exists, serve its assets at /assets
 if FRONTEND_DIST.exists():
