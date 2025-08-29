@@ -27,16 +27,19 @@ Generate concise, evidence-anchored audits of product docs (Vision → PRD → A
 - **Consensus math** + **alignment back-prop**: only advance when docs align across all models
 - Small, automatable CLI; caching; cost caps; research agent integration
 
-## 5) MVP scope
+## 5) MVP scope (IMPLEMENTED ✅)
 
-**In:**
+**✅ In MVP:**
 
-- CLI that ingests 4 markdown docs and runs role auditors in parallel.
-- Strict JSON schema; produces `audit.md`, per-auditor artifacts, `decision.md`.
-- Consensus & gate check (thresholds + approvals + alignment).
-- Pre-Vision **Research** step: `RESEARCH_BRIEF.md`, `MARKET_SCAN.md`.
+- **Council Debate System**: CouncilMember objects with personalities, debate styles, and multi-round discussion
+- **Multi-Model Ensemble**: OpenAI + Anthropic + Google + OpenRouter (Grok) via LiteLLM for maximum perspective diversity
+- **Research Agent**: Tavily integration for internet context gathering in vision stage  
+- **Complete Document Pipeline**: Research Brief → Market Scan → Vision → PRD → Architecture → Implementation Plan
+- **Cross-Document Alignment**: Validation with backlog generation for misaligned transitions
+- **Structured Outputs**: `audit.md`, `consensus_<DOC>.md`, `decision_<STAGE>.md`, `alignment_backlog_<DOC>.md`
+- **Cost Controls**: Caching system achieving ≤$2/run target with parallel execution
 
-**Out (vNext):** Web UI, advanced retrieval, auto-PR creation, annotation store.
+**🔮 Future (v2):** Advanced council moderation, learning from feedback, real-time debate UI, cross-repo integration
 
 ## 6) Success metrics (initial targets)
 

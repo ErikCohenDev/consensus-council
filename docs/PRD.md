@@ -40,6 +40,7 @@
 | R-PRD-012 | Consensus deadlock resolution: max 3 attempts before human escalation                       | Prevent infinite audit loops           | M        | After 3 consensus attempts, trigger human review with full context              | escalation ok |
 | R-PRD-013 | Multi-model ensemble: assign different LLMs to auditor roles for perspective diversity      | Maximize insight variety + reduce bias | S        | PM→OpenAI, Security→Claude, Data→Gemini, etc. with cross-model consensus        | model diversity |
 | R-PRD-014 | Model perspective analysis: detect unique insights and bias patterns per provider           | Optimize model selection + learning    | S        | Track which models find which types of issues; diversity scoring ≥0.7           | insight tracking |
+| R-PRD-015 | Council debate system: enable multi-round discussion between council members               | Enable sophisticated consensus building | S        | Council members can respond to peers, ask questions, build consensus over rounds | debate functionality |
 
 ## 4) Non-Functional Requirements (NFRs)
 

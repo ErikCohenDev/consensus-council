@@ -150,21 +150,23 @@
 ## 8) Competitive Positioning
 
 **Our Unique Value Proposition:**
-"The only AI council that provides multi-perspective document analysis with formal consensus and alignment checking across your entire development lifecycle."
+"The only AI council platform where different LLMs (OpenAI, Claude, Gemini, Grok) debate documents as specialized council members, building consensus through iterative discussion and cross-model perspective synthesis."
 
 **Key Differentiators:**
-1. **Multi-Perspective Council:** PM, Security, Infra, Data, UX, Cost perspectives
-2. **Consensus Mechanism:** Formal voting and threshold-based decisions  
-3. **Alignment Checking:** Ensures documents evolve coherently
-4. **Document Lifecycle:** Vision → PRD → Architecture → Implementation
-5. **Local-First:** Privacy, cost control, no vendor lock-in
+1. **Multi-Model Council Debate:** Different LLMs per role with distinct debate styles and personalities
+2. **Council Member Interaction:** Models respond to peer feedback, ask clarifying questions, and synthesize viewpoints
+3. **Cross-Model Consensus:** Disagreement analysis and perspective diversity scoring across model providers
+4. **Research Agent Integration:** Internet context gathering via Tavily for real-world market intelligence
+5. **Complete Document Lifecycle:** Research Brief → Market Scan → Vision → PRD → Architecture → Implementation
+6. **Local-First with Universal API:** LiteLLM integration for provider flexibility without vendor lock-in
 
 **Positioning Matrix:**
 
-|                    | **Single AI**              | **Multi-AI**       |
-| ------------------ | -------------------------- | ------------------ |
-| **Code Focus**     | GitHub Copilot, CodeRabbit | (Empty quadrant)   |
-| **Document Focus** | ChatGPT/Claude docs        | **🎯 Our Position** |
+|                        | **Single Model**            | **Multi-Model Council**        |
+| ---------------------- | --------------------------- | ------------------------------ |
+| **Code Focus**         | GitHub Copilot, CodeRabbit | (Emerging quadrant)            |
+| **Document Focus**     | ChatGPT/Claude docs         | **🎯 Our Position: Council Debate** |
+| **Council Interaction** | Manual review processes     | **🚀 Our Innovation: LLM-to-LLM Debate** |
 
 ## 9) Risk Assessment & Mitigation
 

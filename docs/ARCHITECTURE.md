@@ -6,35 +6,37 @@
 **Links:** [Vision](./VISION.md) • [PRD](./PRD.md)
 
 ## 0) Context & Constraints
-- Small CLI; local files; deterministic gates; low cost; parallel fan-out.
-- **Framework Strategy:** Start with lightweight custom orchestration + OpenAI structured outputs for MVP. Migrate to CrewAI for v2 when agent coordination complexity increases.
-- **Template-Driven:** Project types (Software MVP, AI/ML, Hardware, etc.) have pre-configured auditor questions and scoring weights.
-- **Human-in-the-Loop:** Strategic documents (Vision, PRD) and consensus deadlocks require human review and context injection.
+- **Council-Based Architecture:** CouncilMember objects with distinct personalities, debate styles, and model assignments
+- **Multi-Model Ensemble:** LiteLLM integration for OpenAI + Anthropic + Google + OpenRouter (Grok) provider flexibility
+- **Iterative Debate System:** Multi-round discussion with consensus emergence detection and disagreement analysis
+- **Research Integration:** Tavily API for internet context gathering in vision stage
+- **Template-Driven:** Project types have pre-configured model assignments per role and debate configurations
+- **Human-in-the-Loop:** Strategic documents and low consensus situations require human moderation
 
 ## 1) High-Level Overview
 
-- Components: CLI Orchestrator, Template Engine, Auditor Workers, Schema Validator, Dedupe/Ranker, Consensus Engine, Human Review Interface, Gate Evaluator, Alignment Analyzer, Cache/Artifacts.
+- **Components:** CLI Orchestrator, Council System, CouncilMember Objects, UniversalModelProvider (LiteLLM), DebateOrchestrator, ConsensusEngine, ResearchAgent (Tavily), AlignmentValidator, HumanReview Interface, Cache/Artifacts.
 
 ```mermaid
 flowchart LR
-  U[User CLI] -->|docs/ + template| ORCH[Orchestrator]
-  ORCH -->|load template| TMPL[Template Engine]
-  TMPL -->|configure auditors| ORCH
-  ORCH -->|fan-out| AUD1[Auditor: PM]
-  ORCH --> AUD2[Auditor: Infra]
-  ORCH --> AUD3[Auditor: Data/Eval]
-  ORCH --> AUD4[Auditor: Security]
-  ORCH --> AUD5[Auditor: UX]
-  ORCH --> AUD6[Auditor: Cost]
-  AUD1 & AUD2 & AUD3 & AUD4 & AUD5 & AUD6 --> VAL[Schema Validator]
-  VAL --> ART[(Artifacts JSON)]
-  ART --> CONS[Consensus Engine]
-  CONS -->|Low Agreement or Strategic Doc| HUMAN[Human Review]
-  CONS -->|High Agreement| GATE[Gate Evaluator]
+  U[User CLI] -->|docs/ + template| COUNCIL[Council System]
+  COUNCIL -->|load template| TMPL[Template Engine]
+  TMPL -->|configure members| COUNCIL
+  COUNCIL -->|Round 1: Initial Reviews| CM1[CouncilMember: PM<br/>GPT-4o]
+  COUNCIL --> CM2[CouncilMember: Security<br/>Claude-Sonnet]
+  COUNCIL --> CM3[CouncilMember: Data<br/>Gemini-Pro]
+  COUNCIL --> CM4[CouncilMember: Infra<br/>Grok]
+  CM1 & CM2 & CM3 & CM4 -->|via LiteLLM| UMP[UniversalModelProvider]
+  UMP --> DEBATE[DebateOrchestrator]
+  DEBATE -->|Round 2+: Peer Responses| COUNCIL
+  DEBATE --> CONS[ConsensusEngine]
+  CONS -->|Low Consensus| HUMAN[Human Review]
+  CONS -->|High Consensus| GATE[Gate Evaluator]
   HUMAN -->|Add Context + Decision| GATE
-  GATE -->|PASS| NEXT[Next Stage]
-  GATE -->|FAIL or ALIGN MISMATCH| ALIGN[Alignment Backlog]
-  ORCH --> CACHE[(Cache)]
+  GATE -->|PASS| ALIGN[AlignmentValidator]
+  GATE -->|FAIL| BACKLOG[Alignment Backlog]
+  ALIGN -->|Context Enhancement| RES[ResearchAgent<br/>Tavily]
+  COUNCIL --> CACHE[(Cache)]
   TMPL --> CONFIG[(Template Config)]
 ```
 

@@ -17,6 +17,7 @@ from .orchestrator import AuditorOrchestrator, OrchestrationResult
 from .alignment import AlignmentValidator
 from .pipeline import PipelineOrchestrator, RevisionStrategy
 from .research_agent import ResearchAgent
+from .council_members import Council, CouncilMember
 
 
 DOCUMENT_STAGE_MAPPING = {
@@ -146,6 +147,7 @@ def cli():  # noqa: D401 - simple Click entrypoint
 @click.option("--api-key", envvar="OPENAI_API_KEY", help="OpenAI API key (or set OPENAI_API_KEY env var)")
 @click.option("--interactive", is_flag=True, help="Enable interactive mode (future)")
 @click.option("--research-context", is_flag=True, help="Enable research agent for internet context gathering")
+@click.option("--council-debate", is_flag=True, help="Enable council member debate mode")
 @click.option("--no-cache", is_flag=True, help="Disable caching for debugging")
 @click.option("--cache-dir", type=click.Path(path_type=Path), help="Custom cache directory (default: .cache)")
 def audit_cmd(
@@ -157,6 +159,7 @@ def audit_cmd(
     api_key: Optional[str],
     interactive: bool,
     research_context: bool,
+    council_debate: bool,
     no_cache: bool,
     cache_dir: Optional[Path],
 ):
