@@ -345,3 +345,40 @@ def pipeline_cmd(
 
     if not summary.success:
         raise SystemExit(1)
+
+
+@cli.command(name="ui", help="Launch the web-based UI server for interactive council management")
+@click.option("--host", default="127.0.0.1", show_default=True, help="Host to bind the server to")
+@click.option("--port", default=8000, type=int, show_default=True, help="Port to bind the server to")
+@click.option("--docs-path", default="./docs", show_default=True, help="Default documents path")
+@click.option("--debug", is_flag=True, help="Enable debug mode with auto-reload")
+def ui_cmd(host: str, port: int, docs_path: str, debug: bool):
+    """Launch the web-based UI server for interactive council management."""
+    try:
+        from .ui_server import UIConfig, run_ui_server
+    except ImportError as e:
+        click.echo(f"❌ Failed to import UI server dependencies: {e}")
+        click.echo("💡 Try installing UI dependencies: pip install fastapi uvicorn websockets")
+        raise SystemExit(1)
+    
+    config = UIConfig(
+        host=host,
+        port=port,
+        docs_path=docs_path,
+        debug=debug
+    )
+    
+    click.echo(f"🚀 Starting LLM Council UI server...")
+    click.echo(f"📍 Server will be available at: http://{host}:{port}")
+    click.echo(f"📁 Default docs path: {docs_path}")
+    click.echo(f"🔧 Debug mode: {'enabled' if debug else 'disabled'}")
+    click.echo()
+    click.echo("Press Ctrl+C to stop the server")
+    
+    try:
+        run_ui_server(config)
+    except KeyboardInterrupt:
+        click.echo("\n👋 UI server stopped")
+    except Exception as e:
+        click.echo(f"❌ Server error: {e}")
+        raise SystemExit(1)

@@ -1,46 +1,52 @@
 # IMPLEMENTATION_PLAN.md — LLM Council Audit & Consensus Platform
 
-**Owner (Eng Lead/PM):** Erik Cohen 
-**Date:** 2025-08-29  
-**Status:** Draft  
+**Owner (Eng Lead/PM):** Erik Cohen
+**Date:** 2025-08-29
+**Status:** Draft
 **Links:** [PRD](./PRD.md) • [Architecture](./ARCHITECTURE.md)
 
 ## 0) Milestones & Status (COMPLETED ✅)
+
 - **M1**: Core CLI + council members + multi-model LLM integration ✅ **DONE**
-- **M2**: Council debate system + consensus + alignment validation ✅ **DONE**  
+- **M2**: Council debate system + consensus + alignment validation ✅ **DONE**
 - **M3**: Research agent + complete document pipeline + test coverage ✅ **DONE**
 - **BONUS**: LiteLLM integration + advanced council debate capabilities ✅ **DONE**
 
 ## 1) Completed Implementation Summary
 
 **✅ Core Infrastructure** (124 tests passing)
+
 - CLI with audit, pipeline, research-context, council-debate commands
 - Document loading and stage mapping (Research → Market → Vision → PRD → Architecture → Implementation)
 - Template engine with YAML configuration and model assignments
 - Cache system with hash-based cost optimization
 
-**✅ Council Member System** 
+**✅ Council Member System**
+
 - CouncilMember objects with personalities, debate styles, and model assignments
 - Multi-round debate orchestration with peer response handling
 - Consensus emergence detection and disagreement analysis
 - Question generation for alignment resolution
 
 **✅ Multi-Model Ensemble via LiteLLM**
+
 - OpenAI (GPT-4o, GPT-4o-mini) for PM and UX roles
 - Anthropic (Claude-3.5-Sonnet, Claude-Haiku) for Security and Cost
-- Google (Gemini-1.5-Pro) for Data/Eval analysis  
+- Google (Gemini-1.5-Pro) for Data/Eval analysis
 - OpenRouter (Grok) for Infrastructure perspective
 - UniversalModelProvider with provider-agnostic interface
 
 **✅ Advanced Features**
+
 - ResearchAgent with Tavily integration for internet context
 - Cross-document alignment validation with backlog generation
-- Structured artifact outputs (audit.md, consensus_<DOC>.md, decision_<STAGE>.md)
+- Structured artifact outputs (audit.md, consensus*<DOC>.md, decision*<STAGE>.md)
 - Cost controls achieving ≤$2/run target
 
 ## 2) Architecture Completeness
 
 **File Structure:**
+
 ```
 src/llm_council/
 ├── cli.py                 # ✅ CLI commands with council-debate support
@@ -49,7 +55,7 @@ src/llm_council/
 ├── multi_model.py        # ✅ NEW: Multi-model ensemble via LiteLLM
 ├── research_agent.py     # ✅ NEW: Tavily research integration
 ├── consensus.py          # ✅ Consensus engine with trimmed mean
-├── alignment.py          # ✅ Cross-document alignment validation  
+├── alignment.py          # ✅ Cross-document alignment validation
 ├── pipeline.py           # ✅ Multi-stage pipeline orchestration
 ├── templates.py          # ✅ YAML template loading and validation
 └── schemas.py            # ✅ Pydantic models for structured outputs
@@ -62,35 +68,43 @@ tests/                     # ✅ 124 tests passing
 ├── test_alignment.py         # ✅ Alignment validation
 └── test_cli.py              # ✅ CLI integration tests
 ```
-|   T-008 | Gate evaluator + thresholds + `decision`  |       | R-PRD-005     |       1d | Todo   |
-|   T-009 | Alignment analyzer + backlog generator    |       | R-PRD-006     |       2d | Todo   |
-|   T-010 | Research pre-gate support + smoke tests   |       | R-PRD-010     |       2d | Todo   |
-|   T-011 | Human review interface + interactive CLI  |       | R-PRD-011     |       3d | Todo   |
-|   T-012 | Consensus deadlock detection + escalation |       | R-PRD-012     |       1d | Todo   |
+
+| T-008 | Gate evaluator + thresholds + `decision` | | R-PRD-005 | 1d | Todo |
+| T-009 | Alignment analyzer + backlog generator | | R-PRD-006 | 2d | Todo |
+| T-010 | Research pre-gate support + smoke tests | | R-PRD-010 | 2d | Todo |
+| T-011 | Human review interface + interactive CLI | | R-PRD-011 | 3d | Todo |
+| T-012 | Consensus deadlock detection + escalation | | R-PRD-012 | 1d | Todo |
 
 ## 2) Quality & Evaluation Gates
-- **Offline**: schema validity ≥99%; consensus repeatable; gate verdict stable with identical inputs.  
-- **Online**: 80% of human spot-checks judge Top Risks useful.  
+
+- **Offline**: schema validity ≥99%; consensus repeatable; gate verdict stable with identical inputs.
+- **Online**: 80% of human spot-checks judge Top Risks useful.
 - **DoD**: docs updated; tests passing; examples packaged; `--max-calls` guard working.
 
 ## 3) Security & Privacy Tasks
-- Env-based secrets; redact logs; document no-PII expectation.  
+
+- Env-based secrets; redact logs; document no-PII expectation.
 - Optional: artifact retention policy.
 
 ## 4) Observability Tasks
+
 - Token/time counters; write per-node summaries; simple logs.
 
 ## 5) Performance & Scalability Tasks
+
 - Parallelism config; chunking; cache effectiveness metric.
 
 ## 6) Readiness & Runbooks
-- README updates; usage examples; troubleshooting (“bad JSON” fixes).  
+
+- README updates; usage examples; troubleshooting (“bad JSON” fixes).
 - Release notes; version tag.
 
 ## 7) Risks, Dependencies, Open Items
+
 - Model or API changes; add fallback prompts/tests.
 
 ## 8) Traceability Matrix
+
 | Requirement | Architecture Component(s)     | Task(s)      | Status |
 | ----------- | ----------------------------- | ------------ | ------ |
 | R-PRD-001   | Orchestrator, Loader          | T-001, T-002 | Todo   |
@@ -106,7 +120,8 @@ tests/                     # ✅ 124 tests passing
 | R-PRD-012   | Consensus Deadlock Resolution | T-012        | Todo   |
 
 ### Gate checklist (Implementation → Launch)
-- [ ] All `R-PRD-###` mapped to tasks; matrix has **no gaps**.  
-- [ ] Schema validity ≥99%; consensus/gate stable; alignment backlog exercised.  
-- [ ] p95 runtime ≤ 5 min on sample corpus; default run ≤ $2 with cache on.  
+
+- [ ] All `R-PRD-###` mapped to tasks; matrix has **no gaps**.
+- [ ] Schema validity ≥99%; consensus/gate stable; alignment backlog exercised.
+- [ ] p95 runtime ≤ 5 min on sample corpus; default run ≤ $2 with cache on.
 - [ ] 0 **CRITICAL**, 0 **HIGH** outstanding.

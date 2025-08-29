@@ -12,7 +12,7 @@ class TestCouncilMember:
         """Test creating council members with different roles and models."""
         pm_member = CouncilMember(
             role="pm",
-            model_provider="openai", 
+            model_provider="openai",
             model_name="gpt-4o",
             expertise_areas=["business_logic", "user_needs", "market_validation"],
             personality="analytical_optimistic"
@@ -28,7 +28,7 @@ class TestCouncilMember:
         security_member = CouncilMember(
             role="security",
             model_provider="anthropic",
-            model_name="claude-3-5-sonnet-20241022", 
+            model_name="claude-3-5-sonnet-20241022",
             expertise_areas=["threat_modeling", "data_privacy", "compliance"],
             personality="cautious_thorough",
             debate_style="devil_advocate"
@@ -63,7 +63,7 @@ class TestCouncilDebate:
         assert review["auditor_role"] == "pm"
         assert "summary" in review["overall_assessment"]
         mock_completion.assert_called_once()
-    
+
     @pytest.mark.asyncio
     @patch('llm_council.council_members.acompletion')
     async def test_council_member_respond_to_peer(self, mock_completion):
@@ -82,9 +82,9 @@ class TestCouncilDebate:
         response = await pm_member.respond_to_peer_feedback([peer_feedback], "vision", "vision")
 
         assert "questions" in response
-        assert "agreements" in response 
+        assert "agreements" in response
         assert "counterpoints" in response
-    
+
     @pytest.mark.asyncio
     async def test_council_debate_rounds(self):
         """Test that council can conduct multiple debate rounds."""
@@ -105,9 +105,9 @@ class TestCouncilDebate:
                 emerging_consensus=["Need clearer success metrics"],
                 remaining_disagreements=["Cost vs quality tradeoff"]
             )
-            
+
             debate_result = await council.conduct_debate(document, "vision", max_rounds=3)
-            
+
             assert isinstance(debate_result, DebateResult)
             assert debate_result.total_rounds >= 1
             assert len(debate_result.participating_members) == 3
@@ -115,7 +115,7 @@ class TestCouncilDebate:
 
 class TestCouncilConsensusBuilding:
     """Test consensus building through iterative debate."""
-    
+
     def test_consensus_emergence_detection(self):
         """Test that council can detect when consensus is emerging."""
         from llm_council.council_members import analyze_consensus_emergence
@@ -129,7 +129,7 @@ class TestCouncilConsensusBuilding:
                 remaining_disagreements=["Cost vs security tradeoff", "Timeline concerns"]
             ),
             DebateRound(
-                round_number=2, 
+                round_number=2,
                 initial_reviews={},
                 peer_responses={"pm": {"agreements": ["Security is critical"]}, "security": {"agreements": ["Cost efficiency matters"]}},
                 emerging_consensus=["Document quality is important", "Security is critical", "Cost efficiency matters"],
@@ -142,9 +142,9 @@ class TestCouncilConsensusBuilding:
         assert consensus_analysis.convergence_trend > 0  # Getting more consensus
         assert len(consensus_analysis.stable_agreements) >= 1
         assert len(consensus_analysis.unresolved_disagreements) == 1
-    
+
     def test_question_generation_for_alignment(self):
-        """Test that council members generate concrete questions for alignment.""" 
+        """Test that council members generate concrete questions for alignment."""
         from llm_council.council_members import generate_alignment_questions
 
         disagreements = [
@@ -157,7 +157,7 @@ class TestCouncilConsensusBuilding:
         assert len(questions) >= 2
         assert any(("delivery" in q.lower() or "deliver" in q.lower()) and "analysis" in q.lower() for q in questions)
         assert any("evaluation" in q.lower() and ("implementation" in q.lower() or "implement" in q.lower()) for q in questions)
-    
+
     def test_debate_termination_conditions(self):
         """Test that debate terminates appropriately."""
         from llm_council.council_members import should_continue_debate
@@ -173,13 +173,13 @@ class TestCouncilConsensusBuilding:
 
         assert not should_continue_debate([high_consensus_round], max_rounds=5)
 
-        # Low consensus should continue debate  
+        # Low consensus should continue debate
         low_consensus_round = DebateRound(
             round_number=1,
             initial_reviews={},
             peer_responses={},
             emerging_consensus=["A"],                       # 1 agreement
             remaining_disagreements=["B", "C", "D", "E"]   # 4 disagreements
-
+        )
 
         assert should_continue_debate([low_consensus_round], max_rounds=5)

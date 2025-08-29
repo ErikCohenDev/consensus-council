@@ -6,7 +6,7 @@ from llm_council.schemas import AuditorResponse, DimensionScore, OverallAssessme
 
 class TestDimensionScore:
     """Test dimension score validation."""
-    
+
     def test_valid_dimension_score(self):
         """Test that valid dimension scores are accepted."""
         score_data = {
@@ -15,7 +15,7 @@ class TestDimensionScore:
             "justification": "This is a clear and well-structured section with good explanations",
             "improvements": ["Consider adding more examples", "Clarify terminology"]
         }
-        
+
         score = DimensionScore(**score_data)
         assert score.score == 4
         assert score.pass_ is True
@@ -31,10 +31,10 @@ class TestDimensionScore:
                 justification="This is a failing score that's out of range completely",
                 improvements=["Fix the score"]
             )
-        
+
         with pytest.raises(ValidationError):
             DimensionScore(
-                score=6,  # Invalid - above range  
+                score=6,  # Invalid - above range
                 **{"pass": True},
                 justification="This is a passing score but the number is out of range",
                 improvements=["Fix the score"]
@@ -63,7 +63,7 @@ class TestDimensionScore:
 
 class TestOverallAssessment:
     """Test overall assessment validation."""
-    
+
     def test_valid_overall_assessment(self):
         """Test that valid overall assessments are accepted."""
         assessment_data = {
@@ -74,13 +74,13 @@ class TestOverallAssessment:
             "top_risks": ["Scope creep potential", "Timeline aggressive"],
             "quick_wins": ["Add timeline estimates", "Include comparison table"]
         }
-        
+
         assessment = OverallAssessment(**assessment_data)
         assert assessment.average_score == 3.83
         assert assessment.overall_pass is True
         assert len(assessment.summary) >= 50
         assert len(assessment.top_strengths) <= 3
-        assert len(assessment.top_risks) <= 3  
+        assert len(assessment.top_risks) <= 3
         assert len(assessment.quick_wins) <= 3
 
     def test_summary_too_short_fails(self):
@@ -110,11 +110,11 @@ class TestOverallAssessment:
 
 class TestAuditorResponse:
     """Test full auditor response validation."""
-    
+
     def test_valid_auditor_response(self, sample_auditor_response):
         """Test that valid auditor responses are accepted."""
         response = AuditorResponse(**sample_auditor_response)
-        
+
         assert response.auditor_role == "pm"
         assert response.document_analyzed == "vision"
         assert response.overall_assessment.overall_pass is True
@@ -125,21 +125,21 @@ class TestAuditorResponse:
     def test_invalid_auditor_role_fails(self, sample_auditor_response):
         """Test that invalid auditor roles are rejected."""
         sample_auditor_response["auditor_role"] = "invalid_role"
-        
+
         with pytest.raises(ValidationError):
             AuditorResponse(**sample_auditor_response)
 
     def test_invalid_document_type_fails(self, sample_auditor_response):
         """Test that invalid document types are rejected."""
         sample_auditor_response["document_analyzed"] = "invalid_doc"
-        
+
         with pytest.raises(ValidationError):
             AuditorResponse(**sample_auditor_response)
 
     def test_confidence_level_out_of_range_fails(self, sample_auditor_response):
         """Test that confidence levels outside 1-5 range are rejected."""
         sample_auditor_response["confidence_level"] = 0
-        
+
         with pytest.raises(ValidationError):
             AuditorResponse(**sample_auditor_response)
 
@@ -147,7 +147,7 @@ class TestAuditorResponse:
         """Test that average score is calculated correctly from dimension scores."""
         # This will be implemented when we add validation logic
         response = AuditorResponse(**sample_auditor_response)
-        
+
         dimension_scores = [
             response.scores_detailed.simplicity.score,
             response.scores_detailed.conciseness.score,
@@ -157,7 +157,7 @@ class TestAuditorResponse:
             response.scores_detailed.evidence_specificity.score
         ]
         expected_avg = sum(dimension_scores) / len(dimension_scores)
-        
+
         assert abs(response.overall_assessment.average_score - expected_avg) < 0.01
 
     def test_overall_pass_logic_correct(self, sample_auditor_response):
@@ -168,6 +168,6 @@ class TestAuditorResponse:
         # Update average score: (4+2+4+5+3+4)/6 = 3.67
         sample_auditor_response["overall_assessment"]["average_score"] = 3.67
         sample_auditor_response["overall_assessment"]["overall_pass"] = False  # Should fail
-        
+
         response = AuditorResponse(**sample_auditor_response)
         assert response.overall_assessment.overall_pass is False
