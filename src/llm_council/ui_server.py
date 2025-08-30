@@ -21,14 +21,19 @@ from typing import Any, Dict, List, Optional
 
 import uvicorn
 import yaml
+import litellm
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from openai import AsyncOpenAI
 
 from .constants import DOCUMENT_STAGE_MAPPING
 from .council_members import Council, CouncilMember
 from .observability import get_tracer, setup_tracing
+from .graph_service import GraphService
+from .orchestrator import AuditorWorker
 
 
 class UIConfig(BaseModel):
@@ -158,6 +163,16 @@ class ConnectionManager:
 
 # Global instances
 app = FastAPI(title="LLM Council UI", description="Visual interface for LLM Council platform")
+
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 setup_tracing("llm-council-backend")
 tracer = get_tracer("llm_council.ui_server")
 connection_manager = ConnectionManager()
@@ -204,6 +219,11 @@ class RegisterProjectRequest(BaseModel):
     docsPath: str
     projectId: Optional[str] = None
 
+class GenerateGraphRequest(BaseModel):
+    document: str
+    context: str
+    projectId: Optional[str] = None
+    auditId: Optional[str] = None
 
 def _pipeline_to_camel(p: PipelineProgress) -> Dict[str, Any]:
     """Convert pipeline progress to camelCase for UI."""
@@ -376,7 +396,7 @@ async def create_audit(req: StartAuditRequest):
         )
         # Import AuditCommand only when needed to avoid circular imports
         from .cli import AuditCommand
-        
+
         # Initialize audit command
         audit_cmd = AuditCommand(
             docs_path=Path(req.docsPath or "./docs"),
@@ -469,6 +489,39 @@ async def get_latest_run(_project_id: str):
             "metrics": _metrics_summary(),
         },
     )
+
+
+@app.post("/api/context/graph")
+async def generate_graph(req: GenerateGraphRequest):
+    """Starts the process of generating and broadcasting graph data for a document."""
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set")
+
+    client = AsyncOpenAI(api_key=api_key)
+
+    worker = AuditorWorker(
+        role="graph_generator",
+        stage="context_graph",
+        client=client,
+        model="gpt-4o",
+    )
+
+    graph_service = GraphService(worker)
+
+    async def stream_graph_data():
+        async for item in graph_service.generate_graph_from_document(req.document, req.context):
+            message = {
+                **item,
+                "projectId": req.projectId,
+                "auditId": req.auditId,
+            }
+            await connection_manager.send_update(message)
+
+    asyncio.create_task(stream_graph_data())
+
+    return ApiResponse(success=True, data={"message": "Graph generation started."})
 
 
 @app.websocket("/ws")
@@ -695,26 +748,52 @@ async def run_audit_with_ui_updates(
             }
         )
 
-
 @app.get("/api/models")
 async def get_models():
     """Return a curated list of supported LLM models with their pricing."""
-    model_catalog = {
+
+    # Hardcoded catalog as a fallback and source of truth for our curated list
+    fallback_catalog = {
         'gpt-4o': { 'provider': 'OpenAI', 'label': 'gpt-4o', 'inPricePer1K': 0.005, 'outPricePer1K': 0.015, 'contextK': 128 },
         'gpt-4o-mini': { 'provider': 'OpenAI', 'label': 'gpt-4o-mini', 'inPricePer1K': 0.00015, 'outPricePer1K': 0.0006, 'contextK': 128 },
-        'gpt-4.1': { 'provider': 'OpenAI', 'label': 'gpt-4.1', 'inPricePer1K': 0.005, 'outPricePer1K': 0.015, 'contextK': 128 },
         'gpt-4-turbo': { 'provider': 'OpenAI', 'label': 'gpt-4-turbo', 'inPricePer1K': 0.01, 'outPricePer1K': 0.03, 'contextK': 128 },
         'claude-3-5-sonnet': { 'provider': 'Anthropic', 'label': 'claude-3.5-sonnet', 'inPricePer1K': 0.003, 'outPricePer1K': 0.015, 'contextK': 200 },
         'claude-3-opus': { 'provider': 'Anthropic', 'label': 'claude-3-opus', 'inPricePer1K': 0.015, 'outPricePer1K': 0.075, 'contextK': 200 },
-        'claude-3-5-haiku': { 'provider': 'Anthropic', 'label': 'claude-3.5-haiku', 'inPricePer1K': 0.0008, 'outPricePer1K': 0.004, 'contextK': 200 },
-        'gemini-1.5-pro': { 'provider': 'Google', 'label': 'gemini-1.5-pro', 'inPricePer1K': 0.003, 'outPricePer1K': 0.015, 'contextK': 1000 },
+        'claude-3-haiku': { 'provider': 'Anthropic', 'label': 'claude-3-haiku', 'inPricePer1K': 0.00025, 'outPricePer1K': 0.00125, 'contextK': 200 },
+        'gemini-1.5-pro': { 'provider': 'Google', 'label': 'gemini-1.5-pro', 'inPricePer1K': 0.0035, 'outPricePer1K': 0.0105, 'contextK': 1000 },
         'gemini-1.5-flash': { 'provider': 'Google', 'label': 'gemini-1.5-flash', 'inPricePer1K': 0.00035, 'outPricePer1K': 0.00053, 'contextK': 1000 },
-        'llama-3.1-70b-instruct': { 'provider': 'Meta', 'label': 'llama-3.1-70b-instruct', 'inPricePer1K': 0.0009, 'outPricePer1K': 0.0009, 'contextK': 128 },
-        'llama-3.1-8b-instruct': { 'provider': 'Meta', 'label': 'llama-3.1-8b-instruct', 'inPricePer1K': 0.0002, 'outPricePer1K': 0.0002, 'contextK': 128 },
-        'mistral-large-2407': { 'provider': 'Mistral', 'label': 'mistral-large-2407', 'inPricePer1K': 0.002, 'outPricePer1K': 0.006, 'contextK': 128 },
-        'grok-2': { 'provider': 'xAI', 'label': 'grok-2', 'inPricePer1K': 0.002, 'outPricePer1K': 0.006, 'contextK': 128 },
+        'llama-3.1-70b-instruct': { 'provider': 'Meta', 'label': 'llama-3.1-70b-instruct', 'inPricePer1K': 0.00059, 'outPricePer1K': 0.00279, 'contextK': 128 },
+        'llama-3.1-8b-instruct': { 'provider': 'Meta', 'label': 'llama-3.1-8b-instruct', 'inPricePer1K': 0.0001, 'outPricePer1K': 0.0004, 'contextK': 128 },
+        'mistral-large-2407': { 'provider': 'Mistral', 'label': 'mistral-large-2407', 'inPricePer1K': 0.003, 'outPricePer1K': 0.009, 'contextK': 128 },
         'command-r-plus': { 'provider': 'Cohere', 'label': 'command-r+', 'inPricePer1K': 0.003, 'outPricePer1K': 0.015, 'contextK': 128 },
     }
+
+    # This mapping is needed because frontend keys sometimes differ from litellm IDs
+    key_to_litellm_id = {
+        'gemini-1.5-pro': 'gemini/gemini-1.5-pro-latest',
+        'gemini-1.5-flash': 'gemini/gemini-1.5-flash-latest',
+        'llama-3.1-70b-instruct': 'meta-llama/Llama-3.1-70b-instruct',
+        'llama-3.1-8b-instruct': 'meta-llama/Llama-3.1-8b-instruct',
+        'mistral-large-2407': 'mistral/mistral-large-latest',
+    }
+
+    model_catalog = {}
+    for key, fallback_data in fallback_catalog.items():
+        litellm_id = key_to_litellm_id.get(key, key)
+        try:
+            cost = litellm.get_model_cost(litellm_id)
+            info = litellm.get_model_info(litellm_id)
+
+            model_catalog[key] = {
+                'provider': fallback_data['provider'],
+                'label': fallback_data['label'],
+                'inPricePer1K': cost.get('input_cost_per_1k_tokens', fallback_data['inPricePer1K']) if cost else fallback_data['inPricePer1K'],
+                'outPricePer1K': cost.get('output_cost_per_1k_tokens', fallback_data['outPricePer1K']) if cost else fallback_data['outPricePer1K'],
+                'contextK': info.get('max_input_tokens', fallback_data['contextK'] * 1000) / 1000 if info else fallback_data['contextK'],
+            }
+        except Exception:
+            model_catalog[key] = fallback_data
+
     return ApiResponse(success=True, data={"models": model_catalog})
 
 
@@ -778,3 +857,18 @@ def run_ui_server(config: UIConfig = UIConfig()):
 
 if __name__ == "__main__":
     run_ui_server()
+
+
+# Example of how to update status from another module
+async def example_update_from_elsewhere():
+    """Example of how to push updates to the UI from other parts of the application."""
+    await asyncio.sleep(5)
+    current_pipeline_status.overall_status = "running"
+    await connection_manager.send_update(
+        {
+            "type": "status_update",
+            "audit_id": current_audit_id,
+            "project_id": current_project_id,
+            "status": current_pipeline_status.model_dump(),
+        }
+    )

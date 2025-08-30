@@ -14,7 +14,7 @@ from typing import Dict, Optional
 
 import click
 
-from ..alignment import AlignmentValidator
+from alignment import AlignmentValidator
 from .constants import DOCUMENT_STAGE_MAPPING
 from .orchestrator import AuditorOrchestrator, OrchestrationResult
 from .pipeline import PipelineOrchestrator, RevisionStrategy

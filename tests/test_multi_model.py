@@ -52,8 +52,9 @@ class TestMultiModelOrchestrator:
 
     @pytest.mark.asyncio
     @patch('multi_model.acompletion')
-    async def test_ensemble_auditor_execution(self, mock_completion, _temp_dir):
+    async def test_ensemble_auditor_execution(self, mock_completion, temp_dir):
         """Test that different models can audit the same document with diverse perspectives."""
+        _ = temp_dir  # Reserved for future file-based test data
 
         # Configure ensemble with different models for different roles
         model_configs = [

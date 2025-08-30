@@ -1,5 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useId } from 'react'
+import ReactFlow, { 
+    Controls, 
+    Background, 
+    applyNodeChanges, 
+    applyEdgeChanges, 
+    Node, 
+    Edge, 
+    NodeChange, 
+    EdgeChange 
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+import { useWebSocketConnection } from '@/hooks/useWebSocketConnection';
 
 type ContextQuestion = {
   id: string
@@ -17,6 +29,8 @@ type SavedIdea = {
   score: number
   updatedAt: number
 }
+
+type ViewMode = 'form' | 'graph';
 
 const LS_KEY = 'llm-council.context-ideas'
 
@@ -46,9 +60,7 @@ const generateProjectTitle = (text: string) => {
 const qualityFactor = (q: ContextQuestion): number => {
   const a = (q.answer || '').trim()
   if (!a) return 0
-  // Reward substantive answers ~2-3 sentences (~120 chars)
   const lenFactor = Math.min(1, a.length / 120)
-  // Bonus if includes numbers for metrics/budget/timeline
   const needsNumbers = ['Metrics', 'Budget', 'Timeline']
   const numBonus = needsNumbers.includes(q.category) && /\d/.test(a) ? 0.15 : 0
   return Math.min(1, lenFactor + numBonus)
@@ -66,8 +78,31 @@ export const ContextPage = () => {
   const [ideaText, setIdeaText] = useState('')
   const [questions, setQuestions] = useState<ContextQuestion[]>([])
   const [savedIdeas, setSavedIdeas] = useState<SavedIdea[]>([])
+  const [viewMode, setViewMode] = useState<ViewMode>('form');
 
-  // Load/save from localStorage
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    [setNodes]
+  );
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    [setEdges]
+  );
+
+  const handleWebSocketMessage = (message: any) => {
+    if (message.type === 'graph_node') {
+      setNodes((nds) => [...nds, { ...message.data, position: { x: Math.random() * 400, y: Math.random() * 400 } }]);
+    }
+    if (message.type === 'graph_edge') {
+      setEdges((eds) => [...eds, message.data]);
+    }
+  };
+
+  useWebSocketConnection(handleWebSocketMessage);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LS_KEY)
@@ -87,7 +122,6 @@ export const ContextPage = () => {
       answer: questions[i]?.answer || '',
     }))
 
-    // Light tailoring from keywords in idea
     const txt = ideaText.toLowerCase()
     if (txt.includes('health') || txt.includes('medical')) {
       qs.push({
@@ -133,84 +167,125 @@ export const ContextPage = () => {
     setQuestions(found.questions)
   }
 
+  const generateGraph = async () => {
+    setNodes([]);
+    setEdges([]);
+    setViewMode('graph');
+
+    const context = `Idea: ${ideaText}\n\nContext Questions:\n${questions.map(q => `- ${q.text}\n  Answer: ${q.answer || 'Not answered'}`).join('\n')}`;
+
+    await fetch('/api/context/graph', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ document: ideaText, context }),
+    });
+  };
+
   const sortedSaved = useMemo(() => savedIdeas.slice().sort((a, b) => b.score - a.score), [savedIdeas])
 
   return (
     <div className="h-full flex">
-      {/* Main editor */}
       <div className="flex-1 flex flex-col">
-        <div className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-6 py-4">
-          <h1 className="text-xl font-semibold">Context Builder</h1>
-          <p className="text-sm opacity-70">Capture key context to improve council outputs</p>
+        <div className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-6 py-4 flex justify-between items-center">
+          <div>
+            <h1 className="text-xl font-semibold">Context Builder</h1>
+            <p className="text-sm opacity-70">Capture key context to improve council outputs</p>
+          </div>
+          <div>
+            <button onClick={() => setViewMode('form')} className={`px-3 py-1 rounded-l-md text-sm ${viewMode === 'form' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>Form</button>
+            <button onClick={() => setViewMode('graph')} className={`px-3 py-1 rounded-r-md text-sm ${viewMode === 'graph' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>Graph</button>
+          </div>
         </div>
 
-        <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-3">
-            <div>
-              <div className="text-sm font-medium mb-1">Idea</div>
-              <textarea
-                id={ideaInputId}
-                value={ideaText}
-                onChange={(e) => setIdeaText(e.target.value)}
-                placeholder="Describe your idea in a few sentences..."
-                className="w-full border rounded p-3 h-36 bg-white dark:bg-gray-800"
-              />
-              <div className="mt-2 flex gap-2">
-                <button
-                  type="button"
-                  className="px-3 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-                  onClick={generateQuestions}
-                  disabled={!ideaText.trim()}
-                >
-                  Generate Questions
-                </button>
-                <button
-                  type="button"
-                  className="px-3 py-2 text-sm rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
-                  onClick={saveIdea}
-                  disabled={questions.length === 0}
-                >
-                  Save Idea
-                </button>
+        {viewMode === 'form' ? (
+          <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1 space-y-3">
+              <div>
+                <div className="text-sm font-medium mb-1">Idea</div>
+                <textarea
+                  id={ideaInputId}
+                  value={ideaText}
+                  onChange={(e) => setIdeaText(e.target.value)}
+                  placeholder="Describe your idea in a few sentences..."
+                  className="w-full border rounded p-3 h-36 bg-white dark:bg-gray-800"
+                />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    className="px-3 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+                    onClick={generateQuestions}
+                    disabled={!ideaText.trim()}
+                  >
+                    Generate Questions
+                  </button>
+                  <button
+                    type="button"
+                    className="px-3 py-2 text-sm rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    onClick={saveIdea}
+                    disabled={questions.length === 0}
+                  >
+                    Save Idea
+                  </button>
+                  <button
+                    type="button"
+                    className="px-3 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700"
+                    onClick={generateGraph}
+                    disabled={questions.length === 0}
+                  >
+                    Generate Graph
+                  </button>
+                </div>
+              </div>
+
+              <div className="border rounded p-3 bg-white dark:bg-gray-800">
+                <div className="text-sm font-semibold mb-2">Context Score</div>
+                <div className="text-3xl font-bold">{score}</div>
+                <div className="text-xs opacity-70 mt-1">Higher scores indicate richer, more actionable context.</div>
               </div>
             </div>
 
-            <div className="border rounded p-3 bg-white dark:bg-gray-800">
-              <div className="text-sm font-semibold mb-2">Context Score</div>
-              <div className="text-3xl font-bold">{score}</div>
-              <div className="text-xs opacity-70 mt-1">Higher scores indicate richer, more actionable context.</div>
+            <div className="lg:col-span-2 space-y-4">
+              {questions.length === 0 ? (
+                <div className="border rounded p-6 text-sm opacity-70 bg-white dark:bg-gray-800">
+                  Add your idea and click Generate Questions to begin.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {questions.map((q, i) => (
+                    <div key={q.id} className="border rounded p-3 bg-white dark:bg-gray-800">
+                      <div className="text-xs opacity-70 mb-1">{q.category}</div>
+                      <div className="text-sm font-medium mb-2">{i + 1}. {q.text}</div>
+                      <textarea
+                        value={q.answer || ''}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          setQuestions((prev) => prev.map((p) => (p.id === q.id ? { ...p, answer: val } : p)))
+                        }}
+                        placeholder="Your answer..."
+                        className="w-full border rounded p-2 h-24 bg-white dark:bg-gray-700"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-
-          <div className="lg:col-span-2 space-y-4">
-            {questions.length === 0 ? (
-              <div className="border rounded p-6 text-sm opacity-70 bg-white dark:bg-gray-800">
-                Add your idea and click Generate Questions to begin.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {questions.map((q, i) => (
-                  <div key={q.id} className="border rounded p-3 bg-white dark:bg-gray-800">
-                    <div className="text-xs opacity-70 mb-1">{q.category}</div>
-                    <div className="text-sm font-medium mb-2">{i + 1}. {q.text}</div>
-                    <textarea
-                      value={q.answer || ''}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        setQuestions((prev) => prev.map((p) => (p.id === q.id ? { ...p, answer: val } : p)))
-                      }}
-                      placeholder="Your answer..."
-                      className="w-full border rounded p-2 h-24 bg-white dark:bg-gray-700"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+        ) : (
+          <div className="h-full w-full">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              fitView
+            >
+              <Background />
+              <Controls />
+            </ReactFlow>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Ranking sidebar */}
       <div className="w-80 border-l dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
         <div className="font-semibold mb-2">Idea Ranking</div>
         <div className="text-xs opacity-70 mb-3">Sorted by context completeness.</div>
@@ -238,4 +313,3 @@ export const ContextPage = () => {
     </div>
   )
 }
-

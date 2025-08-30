@@ -1,6 +1,6 @@
 /**
  * Zod schemas for runtime validation
- * 
+ *
  * These schemas provide runtime type checking and validation for all data
  * flowing between the frontend and backend. They ensure type safety at runtime
  * and provide excellent error messages for debugging.
@@ -14,7 +14,7 @@ export const TimestampSchema = z.number().int().nonnegative()
 export const ModelProviderSchema = z.enum(['openai', 'anthropic', 'google', 'openrouter'])
 export const DocumentStageSchema = z.enum([
   'research_brief',
-  'market_scan', 
+  'market_scan',
   'vision',
   'prd',
   'architecture',
@@ -179,7 +179,7 @@ export const PipelineConfigurationSchema = z.object({
 // Notification schemas
 export const NotificationTypeSchema = z.enum([
   'status_update',
-  'audit_started', 
+  'audit_started',
   'audit_completed',
   'debate_started',
   'debate_round_completed',
@@ -312,15 +312,15 @@ export const validateApiResponse = <T>(
   response: unknown
 ): T => {
   const apiResponse = parseWithSchema(ApiResponseSchema(dataSchema), response)
-  
+
   if (!apiResponse.success) {
     throw new Error(apiResponse.error || 'API request failed')
   }
-  
+
   if (!apiResponse.data) {
     throw new Error('API response missing data')
   }
-  
+
   return apiResponse.data
 }
 
@@ -346,47 +346,47 @@ export const Schemas = {
   AuditStatus: AuditStatusSchema,
   DebateStatus: DebateStatusSchema,
   NotificationPriority: NotificationPrioritySchema,
-  
+
   // Document
   DocumentInfo: DocumentInfoSchema,
   DocumentContent: DocumentContentSchema,
-  
+
   // Audit
   AuditorResponse: AuditorResponseSchema,
   AuditRequest: AuditRequestSchema,
   AuditResult: AuditResultSchema,
   ConsensusResult: ConsensusResultSchema,
-  
+
   // Council
   CouncilMemberInfo: CouncilMemberInfoSchema,
   DebateRound: DebateRoundSchema,
   DebateSession: DebateSessionSchema,
-  
+
   // Research
   ResearchProgress: ResearchProgressSchema,
   ResearchSource: ResearchSourceSchema,
-  
+
   // Pipeline
   PipelineProgress: PipelineProgressSchema,
   PipelineConfiguration: PipelineConfigurationSchema,
-  
+
   // Notifications
   NotificationMessage: NotificationMessageSchema,
   WebSocketMessage: WebSocketMessageSchema,
-  
+
   // API
   StartAuditRequest: StartAuditRequestSchema,
   GetStatusResponse: GetStatusResponseSchema,
-  
+
   // Configuration
   UIConfiguration: UIConfigurationSchema,
   ModelConfiguration: ModelConfigurationSchema,
-  
+
   // Errors
   AppError: AppErrorSchema,
   ValidationError: ValidationErrorSchema,
   NetworkError: NetworkErrorSchema,
-  
+
   // System
   PerformanceMetrics: PerformanceMetricsSchema,
   SystemHealth: SystemHealthSchema,

@@ -55,7 +55,7 @@ export const useWebSocketConnection = () => {
 	const config = useAppStore((s) => s.configuration)
 
 	useEffect(() => {
-		const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws?projectId=${encodeURIComponent(
+				const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws?projectId=${encodeURIComponent(
 			config.projectId || 'local'
 		)}`
 		const ws = getWebSocketService({ url: wsUrl })
