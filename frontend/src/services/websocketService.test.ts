@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { destroyWebSocketService, getWebSocketService } from './websocketService'
 
 // Minimal mock WebSocket that allows us to emit messages
@@ -15,17 +15,17 @@ class MockWebSocket {
 		this.url = url
 		MockWebSocket.instances.push(this)
 		// Simulate async open
-		setTimeout(() => this.onopen && this.onopen(new Event('open')), 0)
+		setTimeout(() => this.onopen?.(new Event('open')), 0)
 	}
 
 	send(_data: string) {}
 	close(_code?: number, _reason?: string) {
 		this.readyState = 3 // CLOSED
 		// Cast to satisfy typing without relying on CloseEvent constructor in jsdom
-		this.onclose && this.onclose(new Event('close') as unknown as CloseEvent)
+		this.onclose?.(new Event('close') as unknown as CloseEvent)
 	}
 	emit(data: unknown) {
-		this.onmessage && this.onmessage(new MessageEvent('message', { data: JSON.stringify(data) }))
+		this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(data) }))
 	}
 }
 

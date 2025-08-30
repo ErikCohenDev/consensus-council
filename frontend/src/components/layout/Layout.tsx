@@ -29,10 +29,10 @@ export const Layout = ({ children }: PropsWithChildren) => {
 				<div className="font-semibold mb-4">LLM Council</div>
 				<nav className="flex flex-col gap-2">
 					<NavLink to="/" className={({ isActive }) => (isActive ? 'font-semibold' : '')}>
-						Dashboard
+						Idea
 					</NavLink>
-					<NavLink to="/audit" className={({ isActive }) => (isActive ? 'font-semibold' : '')}>
-						Audit
+					<NavLink to="/documents" className={({ isActive }) => (isActive ? 'font-semibold' : '')}>
+						Documents
 					</NavLink>
 					<NavLink to="/council" className={({ isActive }) => (isActive ? 'font-semibold' : '')}>
 						Council
@@ -46,7 +46,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
 				</nav>
 			</aside>
 
-			<main className="flex-1">
+			<main className="flex-1 flex flex-col">
 				<header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
 					<div className="flex items-center text-sm">
 						<StatusDot status={connectionStatus} />
@@ -65,7 +65,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
 						</select>
 					</div>
 				</header>
-				<div className="p-4">{children}</div>
+				<div className="flex-1 overflow-hidden">{children}</div>
 			</main>
 		</div>
 	)

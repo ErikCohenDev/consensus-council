@@ -5,7 +5,7 @@ import { Layout } from '@/components/layout/Layout'
 import { useWebSocketConnection } from '@/hooks/useWebSocketConnection'
 import { AuditPage } from '@/pages/AuditPage'
 import { CouncilPage } from '@/pages/CouncilPage'
-import { Dashboard } from '@/pages/Dashboard'
+import { IdeaPage } from '@/pages/IdeaPage'
 import { PipelinePage } from '@/pages/PipelinePage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { useAppStore } from '@/stores/appStore'
@@ -35,8 +35,8 @@ function App() {
 					className="h-full"
 				>
 					<Routes>
-						<Route path="/" element={<Dashboard />} />
-						<Route path="/audit" element={<AuditPage />} />
+						<Route path="/" element={<IdeaPage />} />
+						<Route path="/documents" element={<AuditPage />} />
 						<Route path="/council" element={<CouncilPage />} />
 						<Route path="/pipeline" element={<PipelinePage />} />
 						<Route path="/settings" element={<SettingsPage />} />

@@ -14,7 +14,15 @@ from enum import Enum
 
 from fastapi import WebSocket, WebSocketDisconnect
 
-from interfaces import IEventSubscriber, INotificationService
+# Import interfaces from the parent directory
+try:
+    from ...interfaces import IEventSubscriber, INotificationService
+except ImportError:
+    # Fallback for when running with different Python paths
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parents[2]))
+    from interfaces import IEventSubscriber, INotificationService
 
 
 logger = logging.getLogger(__name__)

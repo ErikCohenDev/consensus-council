@@ -8,7 +8,6 @@
 
 import { parseWithSchema, Schemas } from '@shared/schemas/validation'
 import type { NotificationMessage, WebSocketMessage } from '@shared/types/core'
-import { z } from 'zod'
 
 type MessageHandler = (message: NotificationMessage) => void
 type ConnectionHandler = (connected: boolean) => void
@@ -219,32 +218,6 @@ export class WebSocketService {
 			timestamp: Date.now(),
 			priority,
 		}
-	}
-
-	/**
-	 * Check if message is a notification message
-	 */
-	private isNotificationMessage(message: WebSocketMessage): message is NotificationMessage {
-		// Kept for backwards compatibility if server ever wraps notifications
-		// Prefer normalizeToNotification for current backend messages
-		const result = z
-			.object({
-				type: z.enum([
-					'status_update',
-					'audit_started',
-					'audit_completed',
-					'debate_started',
-					'debate_round_completed',
-					'consensus_reached',
-					'error_occurred',
-					'system_alert',
-				]),
-				data: z.record(z.string(), z.unknown()),
-				timestamp: z.number(),
-				// priority is optional here for compatibility; normalize adds it
-			})
-			.safeParse(message)
-		return result.success as boolean
 	}
 
 	/**

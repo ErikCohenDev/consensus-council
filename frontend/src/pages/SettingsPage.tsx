@@ -1,5 +1,5 @@
-import { useId, useState } from 'react'
 import { EyeIcon, EyeOffIcon } from 'lucide-react'
+import { useId, useState } from 'react'
 import { useAppActions, useAppStore, useUIState } from '@/stores/appStore'
 
 export const SettingsPage = () => {
@@ -68,42 +68,48 @@ export const SettingsPage = () => {
 					{ provider: 'anthropic', label: 'Anthropic API Key', placeholder: 'sk-ant-...' },
 					{ provider: 'google', label: 'Google API Key', placeholder: 'AIza...' },
 					{ provider: 'tavily', label: 'Tavily API Key (Research)', placeholder: 'tvly-...' },
-				].map(({ provider, label, placeholder }) => (
-					<div key={provider} className="space-y-2">
-						<label className="block text-sm opacity-80">{label}</label>
-						<div className="flex gap-2">
-							<div className="relative flex-1">
-								<input
-									type={showApiKeys[provider] ? 'text' : 'password'}
-									className="border rounded px-2 py-1 w-full bg-transparent pr-10"
-									value={apiKeys[provider] || ''}
-									onChange={(e) => updateApiKey(provider, e.target.value)}
-									placeholder={placeholder}
-								/>
-								<button
-									type="button"
-									onClick={() => toggleShowApiKey(provider)}
-									className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-50 hover:opacity-100"
-								>
-									{showApiKeys[provider] ? (
-										<EyeOffIcon className="w-4 h-4" />
-									) : (
-										<EyeIcon className="w-4 h-4" />
-									)}
-								</button>
+				].map(({ provider, label, placeholder }) => {
+					const inputId = `${provider}-api-key`
+					return (
+						<div key={provider} className="space-y-2">
+							<label htmlFor={inputId} className="block text-sm opacity-80">
+								{label}
+							</label>
+							<div className="flex gap-2">
+								<div className="relative flex-1">
+									<input
+										id={inputId}
+										type={showApiKeys[provider] ? 'text' : 'password'}
+										className="border rounded px-2 py-1 w-full bg-transparent pr-10"
+										value={apiKeys[provider] || ''}
+										onChange={(e) => updateApiKey(provider, e.target.value)}
+										placeholder={placeholder}
+									/>
+									<button
+										type="button"
+										onClick={() => toggleShowApiKey(provider)}
+										className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-50 hover:opacity-100"
+									>
+										{showApiKeys[provider] ? (
+											<EyeOffIcon className="w-4 h-4" />
+										) : (
+											<EyeIcon className="w-4 h-4" />
+										)}
+									</button>
+								</div>
+								{apiKeys[provider] && (
+									<button
+										type="button"
+										onClick={() => clearApiKey(provider)}
+										className="px-3 py-1 text-sm border rounded opacity-70 hover:opacity-100"
+									>
+										Clear
+									</button>
+								)}
 							</div>
-							{apiKeys[provider] && (
-								<button
-									type="button"
-									onClick={() => clearApiKey(provider)}
-									className="px-3 py-1 text-sm border rounded opacity-70 hover:opacity-100"
-								>
-									Clear
-								</button>
-							)}
 						</div>
-					</div>
-				))}
+					)
+				})}
 
 				<div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded border-l-4 border-blue-400">
 					<div className="text-sm font-medium text-blue-800 dark:text-blue-200">Security Note</div>
