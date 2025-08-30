@@ -137,3 +137,12 @@ If `frontend/dist` is missing, the server shows a short message with setup instr
   - With coverage/UI: `npm run test:coverage` or `npm run test:ui`
 
 Targets: backend ≥85%, frontend ≥80%. See `docs/TEST_PLAN.md` and `docs/TRACEABILITY_MATRIX.md`.
+
+### E2E (Playwright)
+
+- Prereqs: backend running on `:8000` and Playwright browsers installed.
+- One-time install: `cd frontend && npx playwright install --with-deps`
+- Run tests: `npm run e2e` (or `npm run e2e:headed`)
+  - The config in `frontend/playwright.config.ts` auto-starts the Vite dev server on `:3000` and points tests at that URL.
+  - Backend stays a separate process (see Web UI section above).
+- Tip for fast, offline-friendly runs: before starting the backend, `export AUDIT_MAX_SECONDS=2` to cap each audit and avoid long model calls.

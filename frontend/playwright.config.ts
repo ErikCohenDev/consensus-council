@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
+import path from 'node:path'
 
 export default defineConfig({
   testDir: 'e2e',
@@ -16,8 +17,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     port: 3000,
-    reuseExistingServer: true,
-    cwd: __dirname,
+    cwd: path.dirname(new URL(import.meta.url).pathname),
   },
 })
 

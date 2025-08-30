@@ -18,11 +18,12 @@ from typing import Dict, List, Optional, Any
 from dataclasses import asdict
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import uuid
 from statistics import mean
+import os
 
 from .council_members import Council, CouncilMember
 from .observability import setup_tracing, get_tracer
@@ -153,8 +154,15 @@ current_pipeline_status = PipelineProgress(
     overall_status="idle"
 )
 
-# Prefer serving built Vite frontend if available
-FRONTEND_DIST = (Path(__file__).resolve().parent.parent.parent / "frontend" / "dist")
+# CORS: allow separate frontend origin (Vite dev or static host)
+frontend_origin = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[frontend_origin],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Audit tracking (simple in-memory for MVP)
 current_audit_id: Optional[str] = None
@@ -257,35 +265,8 @@ def _metrics_summary() -> Dict[str, Any]:
 
 @app.get("/")
 async def index():
-    """Serve Vite build if present; otherwise show setup instructions."""
-    if FRONTEND_DIST.exists():
-        index_html = FRONTEND_DIST / "index.html"
-        if index_html.exists():
-            return FileResponse(index_html)
-    return HTMLResponse(
-        """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <title>LLM Council UI</title>
-            <style>
-                body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; padding: 2rem; }
-                code { background: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 4px; }
-            </style>
-        </head>
-        <body>
-            <h1>Frontend not built</h1>
-            <p>
-                Run <code>npm run dev</code> in <code>frontend/</code> for development, or
-                <code>npm run build</code> to produce a production build. The server will automatically
-                serve <code>frontend/dist</code> when it exists.
-            </p>
-        </body>
-        </html>
-        """
-    )
+    """Backend-only service; UI served by Vite/static host."""
+    raise HTTPException(status_code=404, detail="UI served separately. Use Vite dev server or static hosting.")
 
 
 @app.get("/api/healthz")
@@ -598,11 +579,7 @@ async def get_quality_gates():
     return await get_quality_gates_config()
 
 
-# If Vite build exists, serve its assets at /assets
-if FRONTEND_DIST.exists():
-    assets_dir = FRONTEND_DIST / "assets"
-    if assets_dir.exists():
-        app.mount("/assets", StaticFiles(directory=str(assets_dir), html=False), name="assets")
+# No frontend assets served by Python in split deployment mode
 
 
 def run_ui_server(config: UIConfig = UIConfig()):
