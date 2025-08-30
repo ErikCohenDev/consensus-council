@@ -31,6 +31,9 @@ export const Layout = ({ children }: PropsWithChildren) => {
 					<NavLink to="/" className={({ isActive }) => (isActive ? 'font-semibold' : '')}>
 						Idea
 					</NavLink>
+					<NavLink to="/context" className={({ isActive }) => (isActive ? 'font-semibold' : '')}>
+						Context
+					</NavLink>
 					<NavLink to="/documents" className={({ isActive }) => (isActive ? 'font-semibold' : '')}>
 						Documents
 					</NavLink>

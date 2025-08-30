@@ -696,6 +696,28 @@ async def run_audit_with_ui_updates(
         )
 
 
+@app.get("/api/models")
+async def get_models():
+    """Return a curated list of supported LLM models with their pricing."""
+    model_catalog = {
+        'gpt-4o': { 'provider': 'OpenAI', 'label': 'gpt-4o', 'inPricePer1K': 0.005, 'outPricePer1K': 0.015, 'contextK': 128 },
+        'gpt-4o-mini': { 'provider': 'OpenAI', 'label': 'gpt-4o-mini', 'inPricePer1K': 0.00015, 'outPricePer1K': 0.0006, 'contextK': 128 },
+        'gpt-4.1': { 'provider': 'OpenAI', 'label': 'gpt-4.1', 'inPricePer1K': 0.005, 'outPricePer1K': 0.015, 'contextK': 128 },
+        'gpt-4-turbo': { 'provider': 'OpenAI', 'label': 'gpt-4-turbo', 'inPricePer1K': 0.01, 'outPricePer1K': 0.03, 'contextK': 128 },
+        'claude-3-5-sonnet': { 'provider': 'Anthropic', 'label': 'claude-3.5-sonnet', 'inPricePer1K': 0.003, 'outPricePer1K': 0.015, 'contextK': 200 },
+        'claude-3-opus': { 'provider': 'Anthropic', 'label': 'claude-3-opus', 'inPricePer1K': 0.015, 'outPricePer1K': 0.075, 'contextK': 200 },
+        'claude-3-5-haiku': { 'provider': 'Anthropic', 'label': 'claude-3.5-haiku', 'inPricePer1K': 0.0008, 'outPricePer1K': 0.004, 'contextK': 200 },
+        'gemini-1.5-pro': { 'provider': 'Google', 'label': 'gemini-1.5-pro', 'inPricePer1K': 0.003, 'outPricePer1K': 0.015, 'contextK': 1000 },
+        'gemini-1.5-flash': { 'provider': 'Google', 'label': 'gemini-1.5-flash', 'inPricePer1K': 0.00035, 'outPricePer1K': 0.00053, 'contextK': 1000 },
+        'llama-3.1-70b-instruct': { 'provider': 'Meta', 'label': 'llama-3.1-70b-instruct', 'inPricePer1K': 0.0009, 'outPricePer1K': 0.0009, 'contextK': 128 },
+        'llama-3.1-8b-instruct': { 'provider': 'Meta', 'label': 'llama-3.1-8b-instruct', 'inPricePer1K': 0.0002, 'outPricePer1K': 0.0002, 'contextK': 128 },
+        'mistral-large-2407': { 'provider': 'Mistral', 'label': 'mistral-large-2407', 'inPricePer1K': 0.002, 'outPricePer1K': 0.006, 'contextK': 128 },
+        'grok-2': { 'provider': 'xAI', 'label': 'grok-2', 'inPricePer1K': 0.002, 'outPricePer1K': 0.006, 'contextK': 128 },
+        'command-r-plus': { 'provider': 'Cohere', 'label': 'command-r+', 'inPricePer1K': 0.003, 'outPricePer1K': 0.015, 'contextK': 128 },
+    }
+    return ApiResponse(success=True, data={"models": model_catalog})
+
+
 @app.get("/api/config/templates")
 async def list_templates_config():
     """List available template files in config/templates."""

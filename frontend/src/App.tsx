@@ -6,6 +6,7 @@ import { useWebSocketConnection } from '@/hooks/useWebSocketConnection'
 import { AuditPage } from '@/pages/AuditPage'
 import { CouncilPage } from '@/pages/CouncilPage'
 import { IdeaPage } from '@/pages/IdeaPage'
+import { ContextPage } from '@/pages/ContextPage'
 import { PipelinePage } from '@/pages/PipelinePage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { useAppStore } from '@/stores/appStore'
@@ -36,6 +37,7 @@ function App() {
 				>
 					<Routes>
 						<Route path="/" element={<IdeaPage />} />
+						<Route path="/context" element={<ContextPage />} />
 						<Route path="/documents" element={<AuditPage />} />
 						<Route path="/council" element={<CouncilPage />} />
 						<Route path="/pipeline" element={<PipelinePage />} />

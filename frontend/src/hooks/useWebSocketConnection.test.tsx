@@ -5,15 +5,25 @@ import { useWebSocketConnection } from './useWebSocketConnection'
 
 // Mock the WebSocket service to avoid real sockets
 type Handler<T> = (arg: T) => void
+type MessageHandler = Handler<NotificationMessage>
+
 const handlers = {
-	message: new Set<Handler<any>>(),
+	message: new Set<MessageHandler>(),
 	connection: new Set<Handler<boolean>>(),
 	error: new Set<Handler<Error>>(),
 }
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type NotificationMessage = {
+	type: string
+	data: Record<string, unknown>
+	timestamp: number
+	priority: 1 | 2 | 3 | 4
+}
+
 vi.mock('@/services/websocketService', () => {
 	const service = {
-		onMessage: (h: Handler<any>) => {
+		onMessage: (h: MessageHandler) => {
 			handlers.message.add(h)
 			return () => handlers.message.delete(h)
 		},
@@ -37,20 +47,24 @@ vi.mock('@/services/websocketService', () => {
 		getWebSocketService: () => service,
 		destroyWebSocketService: () => {},
 		__emit: {
-			message: (m: any) => handlers.message.forEach((h) => h(m)),
-			connection: (c: boolean) => handlers.connection.forEach((h) => h(c)),
-			error: (e: Error) => handlers.error.forEach((h) => h(e)),
+			message: (m: NotificationMessage) => {
+				for (const h of handlers.message) {
+					h(m)
+				}
+			},
+			connection: (c: boolean) => {
+				for (const h of handlers.connection) {
+					h(c)
+				}
+			},
+			error: (e: Error) => {
+				for (const h of handlers.error) {
+					h(e)
+				}
+			},
 		},
 	}
 })
-
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type NotificationMessage = {
-	type: string
-	data: Record<string, unknown>
-	timestamp: number
-	priority: 1 | 2 | 3 | 4
-}
 
 const TestComp = () => {
 	useWebSocketConnection()
@@ -78,7 +92,13 @@ describe('useWebSocketConnection', () => {
 	})
 
 	it('updates pipeline status on status_update', async () => {
-		const wsModule = await import('@/services/websocketService')
+		const wsModule = (await import(
+			'@/services/websocketService'
+		)) as typeof import('@/services/websocketService') & {
+			__emit: {
+				message: (m: NotificationMessage) => void
+			}
+		}
 		render(<TestComp />)
 
 		const msg: NotificationMessage = {
@@ -96,7 +116,7 @@ describe('useWebSocketConnection', () => {
 			priority: 1,
 		}
 
-		;(wsModule as any).__emit.message(msg)
+		wsModule.__emit.message(msg)
 
 		// Let state update
 		await new Promise((r) => setTimeout(r, 10))
@@ -104,7 +124,13 @@ describe('useWebSocketConnection', () => {
 	})
 
 	it('toggles isAuditRunning on audit events', async () => {
-		const wsModule = await import('@/services/websocketService')
+		const wsModule = (await import(
+			'@/services/websocketService'
+		)) as typeof import('@/services/websocketService') & {
+			__emit: {
+				message: (m: NotificationMessage) => void
+			}
+		}
 		render(<TestComp />)
 
 		const started: NotificationMessage = {
@@ -128,11 +154,11 @@ describe('useWebSocketConnection', () => {
 			priority: 2,
 		}
 
-		;(wsModule as any).__emit.message(started)
+		wsModule.__emit.message(started)
 		await new Promise((r) => setTimeout(r, 10))
 		expect(screen.getByTestId('running').textContent).toBe('true')
 
-		;(wsModule as any).__emit.message(completed)
+		wsModule.__emit.message(completed)
 		await new Promise((r) => setTimeout(r, 10))
 		expect(screen.getByTestId('running').textContent).toBe('false')
 		expect(screen.getByTestId('status').textContent).toBe('completed')

@@ -1,9 +1,8 @@
 """Tests for council member debate and interaction system."""
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from pathlib import Path
+from unittest.mock import Mock, patch
 
-from llm_council.council_members import CouncilMember, Council, DebateRound, DebateResult
+from council_members import CouncilMember, Council, DebateRound, DebateResult
 
 
 class TestCouncilMember:
@@ -43,7 +42,7 @@ class TestCouncilDebate:
     """Test council debate and consensus building."""
 
     @pytest.mark.asyncio
-    @patch('llm_council.council_members.acompletion')
+    @patch('council_members.acompletion')
     async def test_council_member_initial_review(self, mock_completion):
         """Test that council member can provide initial document review."""
         mock_completion.return_value = Mock(
@@ -65,7 +64,7 @@ class TestCouncilDebate:
         mock_completion.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch('llm_council.council_members.acompletion')
+    @patch('council_members.acompletion')
     async def test_council_member_respond_to_peer(self, mock_completion):
         """Test that council member can respond to another member's feedback."""
         mock_completion.return_value = Mock(
@@ -118,7 +117,7 @@ class TestCouncilConsensusBuilding:
 
     def test_consensus_emergence_detection(self):
         """Test that council can detect when consensus is emerging."""
-        from llm_council.council_members import analyze_consensus_emergence
+        from council_members import analyze_consensus_emergence
 
         debate_rounds = [
             DebateRound(
@@ -145,7 +144,7 @@ class TestCouncilConsensusBuilding:
 
     def test_question_generation_for_alignment(self):
         """Test that council members generate concrete questions for alignment."""
-        from llm_council.council_members import generate_alignment_questions
+        from council_members import generate_alignment_questions
 
         disagreements = [
             "PM wants fast delivery, Security wants thorough analysis",
@@ -160,7 +159,7 @@ class TestCouncilConsensusBuilding:
 
     def test_debate_termination_conditions(self):
         """Test that debate terminates appropriately."""
-        from llm_council.council_members import should_continue_debate
+        from council_members import should_continue_debate
 
         # High consensus should terminate debate
         high_consensus_round = DebateRound(

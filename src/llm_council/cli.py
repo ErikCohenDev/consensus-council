@@ -14,7 +14,7 @@ from typing import Dict, Optional
 
 import click
 
-from .alignment import AlignmentValidator
+from ..alignment import AlignmentValidator
 from .constants import DOCUMENT_STAGE_MAPPING
 from .orchestrator import AuditorOrchestrator, OrchestrationResult
 from .pipeline import PipelineOrchestrator, RevisionStrategy
@@ -171,13 +171,17 @@ def audit_cmd(
     quality_gates_path: Optional[Path],
     model: str,
     api_key: Optional[str],
-    _interactive: bool,
+    interactive: bool,  # Remove underscore prefix
     research_context: bool,
-    _council_debate: bool,
+    council_debate: bool,  # Remove underscore prefix
     no_cache: bool,
     cache_dir: Optional[Path],
 ):
     """Run a single audit stage."""
+    # Note: interactive and council_debate parameters are reserved for future features
+    _ = interactive  # Reserved for future interactive mode
+    _ = council_debate  # Reserved for future council debate mode
+
     if not api_key:
         raise click.UsageError(
             "API key required – pass --api-key or set OPENAI_API_KEY env var"
@@ -412,7 +416,7 @@ def ui_cmd(host: str, port: int, docs_path: str, debug: bool):
     try:
         # Import UI components only when needed to avoid circular imports
         from .ui_server import UIConfig, run_ui_server
-        
+
         config = UIConfig(host=host, port=port, docs_path=docs_path, debug=debug)
 
         click.echo("🚀 Starting LLM Council UI server...")
@@ -426,7 +430,8 @@ def ui_cmd(host: str, port: int, docs_path: str, debug: bool):
     except ImportError as e:
         click.echo(f"❌ Failed to import UI server dependencies: {e}")
         click.echo(
-            '💡 Try installing UI dependencies: pip install "fastapi>=0.104.0" "uvicorn>=0.24.0" "websockets>=12.0"'
+            '💡 Try installing UI dependencies: '
+            'pip install "fastapi>=0.104.0" "uvicorn>=0.24.0" "websockets>=12.0"'
         )
         raise SystemExit(1) from e
     except KeyboardInterrupt:

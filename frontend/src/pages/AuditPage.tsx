@@ -16,7 +16,7 @@ export const AuditPage = () => {
 			status: 'pending',
 			completion: 0,
 			description: 'Market research and problem validation',
-			content: ''
+			content: '',
 		},
 		{
 			id: 'vision',
@@ -25,7 +25,7 @@ export const AuditPage = () => {
 			status: 'pending',
 			completion: 0,
 			description: 'Product vision and MVP scope definition',
-			content: ''
+			content: '',
 		},
 		{
 			id: 'prd',
@@ -34,7 +34,7 @@ export const AuditPage = () => {
 			status: 'pending',
 			completion: 0,
 			description: 'Detailed requirements with acceptance criteria',
-			content: ''
+			content: '',
 		},
 		{
 			id: 'architecture',
@@ -43,7 +43,7 @@ export const AuditPage = () => {
 			status: 'pending',
 			completion: 0,
 			description: 'Technical design and system architecture',
-			content: ''
+			content: '',
 		},
 		{
 			id: 'implementation',
@@ -52,12 +52,14 @@ export const AuditPage = () => {
 			status: 'pending',
 			completion: 0,
 			description: 'Task breakdown and development roadmap',
-			content: ''
+			content: '',
 		},
 	]
 
-	const activeDocument = documents.find(doc => doc.id === activeTab)
-	const nextDocument = documents.find((doc) => doc.status === 'in_progress') || documents.find((doc) => doc.status === 'pending')
+	const activeDocument = documents.find((doc) => doc.id === activeTab)
+	const nextDocument =
+		documents.find((doc) => doc.status === 'in_progress') ||
+		documents.find((doc) => doc.status === 'pending')
 
 	const startNextStage = async () => {
 		if (!nextDocument) return
@@ -118,7 +120,9 @@ export const AuditPage = () => {
 				<div className="flex items-center justify-between">
 					<div>
 						<h1 className="text-lg font-semibold">Project Documents</h1>
-						<p className="text-xs opacity-70">Research → Vision → Requirements → Architecture → Implementation</p>
+						<p className="text-xs opacity-70">
+							Research → Vision → Requirements → Architecture → Implementation
+						</p>
 					</div>
 					{nextDocument && nextDocument.id === 'research_brief' && (
 						<button
@@ -129,7 +133,8 @@ export const AuditPage = () => {
 						>
 							{starting ? (
 								<>
-									Researching... <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+									Researching...{' '}
+									<div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
 								</>
 							) : (
 								<>
@@ -180,16 +185,17 @@ export const AuditPage = () => {
 										</h2>
 										<p className="text-sm opacity-70">{activeDocument.description}</p>
 									</div>
-									{activeDocument.status === 'pending' && nextDocument?.id === activeDocument.id && (
-										<button
-											onClick={startNextStage}
-											type="button"
-											disabled={starting}
-											className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded font-medium transition-colors"
-										>
-											Generate Document
-										</button>
-									)}
+									{activeDocument.status === 'pending' &&
+										nextDocument?.id === activeDocument.id && (
+											<button
+												onClick={startNextStage}
+												type="button"
+												disabled={starting}
+												className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded font-medium transition-colors"
+											>
+												Generate Document
+											</button>
+										)}
 								</div>
 							</div>
 
@@ -212,13 +218,17 @@ export const AuditPage = () => {
 											<FileTextIcon className="w-20 h-20 mx-auto text-gray-300" />
 											<div>
 												<h3 className="text-xl font-semibold mb-2">{activeDocument.fileName}</h3>
-												<p className="text-gray-600 dark:text-gray-400 mb-1">{activeDocument.description}</p>
+												<p className="text-gray-600 dark:text-gray-400 mb-1">
+													{activeDocument.description}
+												</p>
 												<p className="text-sm text-gray-500">Not generated yet</p>
 											</div>
-											
+
 											{activeDocument.id === 'research_brief' && (
 												<div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
-													<h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Research Process:</h4>
+													<h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+														Research Process:
+													</h4>
 													<ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1 text-left">
 														<li>• Market intelligence gathering</li>
 														<li>• Competitor analysis</li>
@@ -230,7 +240,9 @@ export const AuditPage = () => {
 
 											{activeDocument.id === 'vision' && (
 												<div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg p-4">
-													<h4 className="font-medium text-purple-900 dark:text-purple-100 mb-2">Vision Elements:</h4>
+													<h4 className="font-medium text-purple-900 dark:text-purple-100 mb-2">
+														Vision Elements:
+													</h4>
 													<ul className="text-sm text-purple-700 dark:text-purple-300 space-y-1 text-left">
 														<li>• Product vision statement</li>
 														<li>• Target user personas</li>
@@ -249,7 +261,8 @@ export const AuditPage = () => {
 												>
 													{starting ? (
 														<>
-															Generating... <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+															Generating...{' '}
+															<div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
 														</>
 													) : (
 														<>
@@ -271,7 +284,7 @@ export const AuditPage = () => {
 					<div className="border-b dark:border-gray-700 px-4 py-3">
 						<h3 className="font-semibold">Council Activity</h3>
 					</div>
-					
+
 					<div className="flex-1 p-4 overflow-auto">
 						{error && (
 							<div className="mb-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded p-3">
@@ -279,12 +292,22 @@ export const AuditPage = () => {
 							</div>
 						)}
 
-						{activeDocument.id === 'research_brief' ? (
+						{activeDocument?.id === 'research_brief' ? (
 							<div className="space-y-3">
 								<div className="text-sm font-medium text-blue-600 mb-3">Research Phase Active</div>
 								{[
-									{ role: 'Research Agent', llm: 'Tavily + GPT-4', activity: 'Market intelligence gathering', status: 'active' },
-									{ role: 'PM Auditor', llm: 'GPT-4o', activity: 'Problem validation', status: 'active' }
+									{
+										role: 'Research Agent',
+										llm: 'Tavily + GPT-4',
+										activity: 'Market intelligence gathering',
+										status: 'active',
+									},
+									{
+										role: 'PM Auditor',
+										llm: 'GPT-4o',
+										activity: 'Problem validation',
+										status: 'active',
+									},
 								].map((member) => (
 									<div key={member.role} className="border rounded p-3 bg-white dark:bg-gray-800">
 										<div className="flex items-center gap-2 mb-2">
@@ -310,7 +333,10 @@ export const AuditPage = () => {
 						<div className="border rounded p-3 bg-white dark:bg-gray-800">
 							<div className="font-medium text-sm mb-2">Pipeline Status</div>
 							<div className="text-xs opacity-70">
-								Overall: <span className="capitalize font-medium">{pipelineProgress?.overallStatus ?? 'idle'}</span>
+								Overall:{' '}
+								<span className="capitalize font-medium">
+									{pipelineProgress?.overallStatus ?? 'idle'}
+								</span>
 							</div>
 						</div>
 					</div>
