@@ -1,5 +1,5 @@
-import { defineConfig, devices } from '@playwright/test'
 import path from 'node:path'
+import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: 'e2e',
@@ -20,4 +20,3 @@ export default defineConfig({
     cwd: path.dirname(new URL(import.meta.url).pathname),
   },
 })
-

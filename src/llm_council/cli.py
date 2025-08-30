@@ -6,18 +6,21 @@ single primary subcommand: `audit` which runs an audit for a specific stage.
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_DOWN
+from decimal import ROUND_DOWN, Decimal
 from pathlib import Path
 from typing import Dict, Optional
 
 import click
 
-from .orchestrator import AuditorOrchestrator, OrchestrationResult
 from .alignment import AlignmentValidator
+from .orchestrator import AuditorOrchestrator, OrchestrationResult
 from .pipeline import PipelineOrchestrator, RevisionStrategy
 from .research_agent import ResearchAgent
+from .ui_server import UIConfig, run_ui_server
 
+logger = logging.getLogger(__name__)
 
 DOCUMENT_STAGE_MAPPING = {
     "RESEARCH_BRIEF.md": "research_brief",
@@ -58,6 +61,7 @@ class AuditCommand:
                     documents[key] = file.read_text(encoding="utf-8")
                 except Exception:  # noqa: BLE001
                     # Skip unreadable file; continue loading others
+                    logger.warning("Could not read file: %s", file.name, exc_info=True)
                     continue
         return documents
 
@@ -69,7 +73,8 @@ class AuditCommand:
             cr = result.consensus_result
             lines.append(f"Final Decision: {cr.final_decision}")
             lines.append(
-                f"Weighted Consensus Score: {cr.weighted_average:.1f} (Agreement {cr.agreement_level:.2f})"
+                f"Weighted Consensus Score: {cr.weighted_average:.1f} "
+                f"(Agreement {cr.agreement_level:.2f})"
             )
         else:
             lines.append("Final Decision: UNKNOWN (partial failure)")
@@ -78,7 +83,9 @@ class AuditCommand:
             oa = resp.get("overall_assessment", {})
             summary = oa.get("summary", "")
             lines.append("")
-            lines.append(f"Auditor: {resp.get('auditor_role')} - Pass: {oa.get('overall_pass')}")
+            lines.append(
+                f"Auditor: {resp.get('auditor_role')} - Pass: {oa.get('overall_pass')}"
+            )
             if summary:
                 lines.append(summary)
             # Risks
@@ -103,7 +110,10 @@ class AuditCommand:
 
         for result in alignment_results:
             status = "✅ ALIGNED" if result.is_aligned else "❌ MISALIGNED"
-            lines.append(f"{result.source_stage} → {result.target_stage}: {status} ({result.alignment_score:.1f}/5)")
+            lines.append(
+                f"{result.source_stage} → {result.target_stage}: {status} "
+                f"({result.alignment_score:.1f}/5)"
+            )
 
             if not result.is_aligned:
                 lines.append(f"  Issues: {len(result.misalignments)} misalignments detected")
@@ -117,25 +127,27 @@ class AuditCommand:
         lines = ["=== EXECUTION SUMMARY ==="]
         lines.append(f"Execution Time: {result.execution_time:.1f}")
         if result.total_tokens is not None:
-            lines.append(
-                f"Total Tokens: {format(result.total_tokens, ',')}"
-            )
+            lines.append(f"Total Tokens: {format(result.total_tokens, ',')}")
         if result.total_cost is not None:
             # Truncate (not round half-up) to match test expectation for 0.075 -> 0.07
-            cost_str = f"{Decimal(str(result.total_cost)).quantize(Decimal('0.01'), rounding=ROUND_DOWN)}"
+            cost_str = (
+                f"{Decimal(str(result.total_cost)).quantize(Decimal('0.01'), rounding=ROUND_DOWN)}"
+            )
             lines.append(f"Total Cost: ${cost_str}")
         return "\n".join(lines)
 
 
 @click.group(help="LLM Council Audit CLI providing document quality gates.")
-def cli():  # noqa: D401 - simple Click entrypoint
-    pass
+def cli():
+    """Main CLI entrypoint."""
 
 
 @cli.command(name="audit", help="Run an audit for a specific stage.")
 @click.argument("docs_path", type=click.Path(path_type=Path))
 @click.option("--stage", required=True, help="Stage to audit (e.g. vision, prd)")
-@click.option("--template", "template_path", type=click.Path(path_type=Path), help="Path to template YAML")
+@click.option(
+    "--template", "template_path", type=click.Path(path_type=Path), help="Path to template YAML"
+)
 @click.option(
     "--quality-gates",
     "quality_gates_path",
@@ -143,12 +155,24 @@ def cli():  # noqa: D401 - simple Click entrypoint
     help="Path to quality gates YAML",
 )
 @click.option("--model", default="gpt-4o", show_default=True, help="Model name")
-@click.option("--api-key", envvar="OPENAI_API_KEY", help="OpenAI API key (or set OPENAI_API_KEY env var)")
+@click.option(
+    "--api-key",
+    envvar="OPENAI_API_KEY",
+    help="OpenAI API key (or set OPENAI_API_KEY env var)",
+)
 @click.option("--interactive", is_flag=True, help="Enable interactive mode (future)")
-@click.option("--research-context", is_flag=True, help="Enable research agent for internet context gathering")
+@click.option(
+    "--research-context",
+    is_flag=True,
+    help="Enable research agent for internet context gathering",
+)
 @click.option("--council-debate", is_flag=True, help="Enable council member debate mode")
 @click.option("--no-cache", is_flag=True, help="Disable caching for debugging")
-@click.option("--cache-dir", type=click.Path(path_type=Path), help="Custom cache directory (default: .cache)")
+@click.option(
+    "--cache-dir",
+    type=click.Path(path_type=Path),
+    help="Custom cache directory (default: .cache)",
+)
 def audit_cmd(
     docs_path: Path,
     stage: str,
@@ -156,12 +180,13 @@ def audit_cmd(
     quality_gates_path: Optional[Path],
     model: str,
     api_key: Optional[str],
-    interactive: bool,
+    _interactive: bool,
     research_context: bool,
-    council_debate: bool,
+    _council_debate: bool,
     no_cache: bool,
     cache_dir: Optional[Path],
 ):
+    """Run a single audit stage."""
     if not api_key:
         raise click.UsageError(
             "API key required – pass --api-key or set OPENAI_API_KEY env var"
@@ -191,9 +216,12 @@ def audit_cmd(
         try:
             research_agent = ResearchAgent(provider="tavily", enabled=True)
             context = asyncio.run(research_agent.gather_context(document_content, stage))
-            document_content = research_agent.format_context_for_document(context, document_content)
+            document_content = research_agent.format_context_for_document(
+                context, document_content
+            )
         except Exception as e:
             click.echo(f"Warning: Research agent failed: {e}", err=True)
+            logger.warning("Research agent failed", exc_info=True)
 
     # Run orchestrator
     if not template_path:
@@ -223,7 +251,9 @@ def audit_cmd(
     for alignment_result in alignment_results:
         if not alignment_result.is_aligned:
             backlog_content = alignment_validator.generate_backlog_file(alignment_result)
-            backlog_file = output_dir / f"alignment_backlog_{alignment_result.target_stage}.md"
+            backlog_file = (
+                output_dir / f"alignment_backlog_{alignment_result.target_stage}.md"
+            )
             backlog_file.write_text(backlog_content, encoding="utf-8")
 
     # Generate content for output files
@@ -236,16 +266,24 @@ def audit_cmd(
         audit_content = f"{audit_content}\n\n{alignment_summary}"
 
     # Write output files according to PRD requirements
-    (output_dir / "audit.md").write_text(f"{audit_content}\n\n{execution_content}", encoding="utf-8")
+    (output_dir / "audit.md").write_text(
+        f"{audit_content}\n\n{execution_content}", encoding="utf-8"
+    )
     (output_dir / f"decision_{stage}.md").write_text(audit_content, encoding="utf-8")
 
     # Write consensus details if available
     if result.consensus_result:
         consensus_content = f"# Consensus Analysis - {stage.upper()}\n\n"
         consensus_content += f"Final Decision: {result.consensus_result.final_decision}\n"
-        consensus_content += f"Weighted Average: {result.consensus_result.weighted_average:.2f}\n"
-        consensus_content += f"Agreement Level: {result.consensus_result.agreement_level:.2f}\n"
-        (output_dir / f"consensus_{stage}.md").write_text(consensus_content, encoding="utf-8")
+        consensus_content += (
+            f"Weighted Average: {result.consensus_result.weighted_average:.2f}\n"
+        )
+        consensus_content += (
+            f"Agreement Level: {result.consensus_result.agreement_level:.2f}\n"
+        )
+        (output_dir / f"consensus_{stage}.md").write_text(
+            consensus_content, encoding="utf-8"
+        )
 
     click.echo(audit_content)
     click.echo("")
@@ -259,15 +297,34 @@ def audit_cmd(
 __all__ = ["cli", "AuditCommand"]
 
 
-@cli.command(name="pipeline", help="Run a multi-stage gated pipeline (Vision → PRD → Architecture)")
+@cli.command(
+    name="pipeline", help="Run a multi-stage gated pipeline (Vision → PRD → Architecture)"
+)
 @click.argument("docs_path", type=click.Path(path_type=Path))
-@click.option("--template", "template_path", type=click.Path(path_type=Path), required=True)
-@click.option("--stages", default="vision,prd,architecture", show_default=True, help="Comma-separated stages")
-@click.option("--max-iters", default=1, type=int, show_default=True, help="Max pipeline iterations")
+@click.option(
+    "--template", "template_path", type=click.Path(path_type=Path), required=True
+)
+@click.option(
+    "--stages",
+    default="vision,prd,architecture",
+    show_default=True,
+    help="Comma-separated stages",
+)
+@click.option(
+    "--max-iters", default=1, type=int, show_default=True, help="Max pipeline iterations"
+)
 @click.option("--model", default="gpt-4o", show_default=True, help="Model name")
-@click.option("--api-key", envvar="OPENAI_API_KEY", help="OpenAI API key (or set OPENAI_API_KEY env var)")
+@click.option(
+    "--api-key",
+    envvar="OPENAI_API_KEY",
+    help="OpenAI API key (or set OPENAI_API_KEY env var)",
+)
 @click.option("--no-cache", is_flag=True, help="Disable caching for debugging")
-@click.option("--cache-dir", type=click.Path(path_type=Path), help="Custom cache directory (default: .cache)")
+@click.option(
+    "--cache-dir",
+    type=click.Path(path_type=Path),
+    help="Custom cache directory (default: .cache)",
+)
 def pipeline_cmd(
     docs_path: Path,
     template_path: Path,
@@ -278,6 +335,7 @@ def pipeline_cmd(
     no_cache: bool,
     cache_dir: Optional[Path],
 ):
+    """Run a multi-stage gated pipeline."""
     if not api_key:
         raise click.UsageError(
             "API key required - pass --api-key or set OPENAI_API_KEY env var"
@@ -337,7 +395,10 @@ def pipeline_cmd(
         if misaligned:
             lines.append("Misalignments:")
             for ar in misaligned[:5]:
-                lines.append(f"- {ar.source_stage} → {ar.target_stage}: {ar.misalignments[0] if ar.misalignments else 'Unknown issue'}")
+                lines.append(
+                    f"- {ar.source_stage} → {ar.target_stage}: "
+                    f"{ar.misalignments[0] if ar.misalignments else 'Unknown issue'}"
+                )
 
     (docs_path / "pipeline_summary.md").write_text("\n".join(lines), encoding="utf-8")
     click.echo("\n".join(lines))
@@ -346,38 +407,37 @@ def pipeline_cmd(
         raise SystemExit(1)
 
 
-@cli.command(name="ui", help="Launch the web-based UI server for interactive council management")
+@cli.command(
+    name="ui", help="Launch the web-based UI server for interactive council management"
+)
 @click.option("--host", default="127.0.0.1", show_default=True, help="Host to bind the server to")
-@click.option("--port", default=8000, type=int, show_default=True, help="Port to bind the server to")
+@click.option(
+    "--port", default=8000, type=int, show_default=True, help="Port to bind the server to"
+)
 @click.option("--docs-path", default="./docs", show_default=True, help="Default documents path")
 @click.option("--debug", is_flag=True, help="Enable debug mode with auto-reload")
 def ui_cmd(host: str, port: int, docs_path: str, debug: bool):
     """Launch the web-based UI server for interactive council management."""
     try:
-        from .ui_server import UIConfig, run_ui_server
+        config = UIConfig(host=host, port=port, docs_path=docs_path, debug=debug)
+
+        click.echo("🚀 Starting LLM Council UI server...")
+        click.echo(f"📍 Server will be available at: http://{host}:{port}")
+        click.echo(f"📁 Default docs path: {docs_path}")
+        click.echo(f"🔧 Debug mode: {'enabled' if debug else 'disabled'}")
+        click.echo()
+        click.echo("Press Ctrl+C to stop the server")
+
+        run_ui_server(config)
     except ImportError as e:
         click.echo(f"❌ Failed to import UI server dependencies: {e}")
-        click.echo("💡 Try installing UI dependencies: pip install fastapi uvicorn websockets")
-        raise SystemExit(1)
-
-    config = UIConfig(
-        host=host,
-        port=port,
-        docs_path=docs_path,
-        debug=debug
-    )
-
-    click.echo("🚀 Starting LLM Council UI server...")
-    click.echo(f"📍 Server will be available at: http://{host}:{port}")
-    click.echo(f"📁 Default docs path: {docs_path}")
-    click.echo(f"🔧 Debug mode: {'enabled' if debug else 'disabled'}")
-    click.echo()
-    click.echo("Press Ctrl+C to stop the server")
-
-    try:
-        run_ui_server(config)
+        click.echo(
+            '💡 Try installing UI dependencies: pip install "fastapi>=0.104.0" "uvicorn>=0.24.0" "websockets>=12.0"'
+        )
+        raise SystemExit(1) from e
     except KeyboardInterrupt:
         click.echo("\n👋 UI server stopped")
     except Exception as e:
         click.echo(f"❌ Server error: {e}")
-        raise SystemExit(1)
+        logger.critical("UI server failed", exc_info=True)
+        raise SystemExit(1) from e

@@ -25,7 +25,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@shared/*": ["../shared/*"]
-    }
+    },
+    "types": ["vite/client", "node"]
   },
   "include": [
     "src/**/*",

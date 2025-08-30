@@ -14,7 +14,7 @@ from enum import Enum
 
 from fastapi import WebSocket, WebSocketDisconnect
 
-from ..interfaces import IEventSubscriber, INotificationService
+from interfaces import IEventSubscriber, INotificationService
 
 
 logger = logging.getLogger(__name__)
@@ -113,10 +113,10 @@ class NotificationService(INotificationService):
         }
 
         for event_type, notification_type in event_mappings.items():
-            await self._event_subscriber.subscribe(
-                event_type,
-                lambda data, ntype=notification_type: self._handle_system_event(ntype, data)
+            handler = lambda data, ntype=notification_type: self._handle_system_event(
+                ntype, data
             )
+            await self._event_subscriber.subscribe(event_type, handler)
 
     async def _handle_system_event(self, notification_type: NotificationType, data: Dict[str, Any]) -> None:
         """Handle system events and convert them to notifications."""
@@ -155,7 +155,7 @@ class NotificationService(INotificationService):
         """Disconnect a WebSocket client."""
         if client_id in self._connections:
             del self._connections[client_id]
-            logger.info(f"Client {client_id} disconnected ({len(self._connections)} remaining)")
+            logger.info("Client %s disconnected (%d remaining)", client_id, len(self._connections))
 
     async def notify_status_change(self, event_type: str, data: Dict[str, Any]) -> None:
         """Send status change notification to all clients."""
@@ -253,7 +253,7 @@ class NotificationService(INotificationService):
             self.disconnect_client(client_id)
 
         if disconnected_clients:
-            logger.info(f"Cleaned up {len(disconnected_clients)} disconnected clients")
+            logger.info("Cleaned up %d disconnected clients", len(disconnected_clients))
 
     async def _send_history_to_client(self, connection: WebSocketConnection) -> None:
         """Send recent message history to a newly connected client."""
@@ -273,7 +273,7 @@ class NotificationService(INotificationService):
         for event_type in event_types:
             connection.subscribe_to(event_type)
 
-        logger.debug(f"Client {client_id} subscribed to {event_types}")
+        logger.debug("Client %s subscribed to %s", client_id, event_types)
         return True
 
     async def unsubscribe_client(self, client_id: str, event_types: List[str]) -> bool:
@@ -285,7 +285,7 @@ class NotificationService(INotificationService):
         for event_type in event_types:
             connection.unsubscribe_from(event_type)
 
-        logger.debug(f"Client {client_id} unsubscribed from {event_types}")
+        logger.debug("Client %s unsubscribed from %s", client_id, event_types)
         return True
 
     def get_connected_clients(self) -> List[Dict[str, Any]]:

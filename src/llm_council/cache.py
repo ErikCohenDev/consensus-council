@@ -1,1 +1,1 @@
-from cache import *  # noqa: F401,F403
+from ..cache import *  # noqa: F401,F403

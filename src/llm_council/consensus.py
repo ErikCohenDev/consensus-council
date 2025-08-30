@@ -129,7 +129,9 @@ class ConsensusEngine:
         for severity, count in blocking_issues_by_severity.items():
             if count > self.blocking_gates.get(severity, 999):
                 blocking_issues_fail = True
-                failure_reasons.append(f"Too many {severity} issues: {count} > {self.blocking_gates[severity]}")
+                failure_reasons.append(
+                    f"Too many {severity} issues: {count} > {self.blocking_gates[severity]}"
+                )
 
         # Check for disagreement requiring human review
         requires_human_review = False
@@ -144,10 +146,14 @@ class ConsensusEngine:
             final_decision = "FAIL"
         elif not consensus_pass:
             final_decision = "FAIL"
-            failure_reasons.append(f"Consensus score {weighted_average:.2f} below threshold {self.score_threshold}")
+            failure_reasons.append(
+                f"Consensus score {weighted_average:.2f} below threshold {self.score_threshold}"
+            )
         elif not approval_pass:
             final_decision = "FAIL"
-            failure_reasons.append(f"Approval rate {approval_percentage:.2f} below threshold {self.approval_threshold}")
+            failure_reasons.append(
+                f"Approval rate {approval_percentage:.2f} below threshold {self.approval_threshold}"
+            )
         else:
             final_decision = "PASS"
 

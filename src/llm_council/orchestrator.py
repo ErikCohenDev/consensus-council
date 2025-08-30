@@ -66,7 +66,9 @@ class AuditorWorker:
         # Shared call counter to enforce global caps across workers
         self.calls_counter = calls_counter
 
-    async def execute_audit(self, prompt: str, template_content: str = "", document_content: str = "") -> Dict[str, Any]:
+    async def execute_audit(
+        self, prompt: str, template_content: str = "", document_content: str = ""
+    ) -> Dict[str, Any]:
         """Execute the audit prompt and return parsed JSON.
 
         Retries on invalid JSON or generic exceptions up to max_retries.
@@ -75,7 +77,9 @@ class AuditorWorker:
         """
         # Check cache if available
         if self.cache:
-            cache_key = CacheKey.generate_from_content(self.model, template_content, prompt, document_content)
+            cache_key = CacheKey.generate_from_content(
+                self.model, template_content, prompt, document_content
+            )
             cached_result = self.cache.get(cache_key)
             if cached_result:
                 return cached_result
@@ -99,7 +103,8 @@ class AuditorWorker:
                         messages=[
                             {
                                 "role": "system",
-                                "content": "You are an expert structured auditor. Return ONLY valid JSON that conforms to the requested schema.",
+                                "content": "You are an expert structured auditor. "
+                                "Return ONLY valid JSON that conforms to the requested schema.",
                             },
                             {"role": "user", "content": prompt},
                         ],
@@ -117,7 +122,9 @@ class AuditorWorker:
 
                 # Store in cache if available
                 if self.cache:
-                    cache_key = CacheKey.generate_from_content(self.model, template_content, prompt, document_content)
+                    cache_key = CacheKey.generate_from_content(
+                        self.model, template_content, prompt, document_content
+                    )
                     self.cache.set(cache_key, data)
 
                 return data
@@ -161,7 +168,7 @@ class AuditorOrchestrator:
         self._client = AsyncOpenAI(api_key=api_key)
 
         # Initialize cache if enabled
-        if enable_cache and cache_dir:
+        if self.enable_cache and cache_dir:
             self._cache = AuditCache(cache_dir)
         else:
             self._cache = None
@@ -169,6 +176,7 @@ class AuditorOrchestrator:
     async def execute_stage_audit(
         self, stage: str, document_content: str
     ) -> OrchestrationResult:
+        """Execute a full audit for a given stage and document content."""
         start = time.perf_counter()
         auditors = self._template_engine.get_stage_auditors(stage)
         if not auditors:

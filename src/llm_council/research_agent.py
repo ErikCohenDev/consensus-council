@@ -6,9 +6,10 @@ inform document auditing with real-world context.
 """
 from __future__ import annotations
 
-import os
 import logging
+import os
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Dict, List, Optional, Any
 from abc import ABC, abstractmethod
 
@@ -72,13 +73,20 @@ class TavilyProvider(SearchProvider):
                 'results': [
                     {
                         'title': f'Mock Market Research: {query}',
-                        'content': f'Mock market intelligence data for query: {query}. This includes competitive analysis, market trends, and relevant industry insights.',
+                        'content': (
+                            f'Mock market intelligence data for query: {query}. '
+                            'This includes competitive analysis, market trends, '
+                            'and relevant industry insights.'
+                        ),
                         'url': 'https://example.com/mock-research',
                         'score': 0.8
                     },
                     {
                         'title': f'Industry Analysis: {query}',
-                        'content': f'Comprehensive industry analysis covering market size, growth trends, and key players related to: {query}.',
+                        'content': (
+                            'Comprehensive industry analysis covering market size, '
+                            'growth trends, and key players related to: {query}.'
+                        ),
                         'url': 'https://example.com/industry-analysis',
                         'score': 0.7
                     }
@@ -109,7 +117,9 @@ class ResearchAgent:
         else:
             raise ValueError(f"Unsupported research provider: {provider}")
 
-    async def gather_context(self, document_content: str, stage: str = "vision") -> ResearchContext:
+    async def gather_context(
+        self, document_content: str, stage: str = "vision"
+    ) -> ResearchContext:
         """Gather internet context relevant to the document and stage."""
         if not self.enabled or not self._search_provider:
             return ResearchContext(
@@ -152,10 +162,10 @@ class ResearchAgent:
 
         return " ".join(keywords[:3])  # Limit to top 3 concepts
 
-    def _process_search_results(self, search_results: Dict[str, Any], query: str) -> ResearchContext:
+    def _process_search_results(
+        self, search_results: Dict[str, Any], query: str
+    ) -> ResearchContext:
         """Process raw search results into structured research context."""
-        from datetime import datetime
-
         market_trends = []
         competitors = []
         technical_insights = []
@@ -170,11 +180,21 @@ class ResearchAgent:
 
             # Categorize insights based on content
             if any(term in content.lower() for term in ["market", "growth", "trend"]):
-                market_trends.append(content[:100] + "..." if len(content) > 100 else content)
-            elif any(term in content.lower() for term in ["competitor", "github", "vs", "alternative"]):
+                market_trends.append(
+                    content[:100] + "..." if len(content) > 100 else content
+                )
+            elif any(
+                term in content.lower()
+                for term in ["competitor", "github", "vs", "alternative"]
+            ):
                 competitors.append(title)
-            elif any(term in content.lower() for term in ["technology", "technical", "architecture"]):
-                technical_insights.append(content[:100] + "..." if len(content) > 100 else content)
+            elif any(
+                term in content.lower()
+                for term in ["technology", "technical", "architecture"]
+            ):
+                technical_insights.append(
+                    content[:100] + "..." if len(content) > 100 else content
+                )
 
         return ResearchContext(
             market_trends=market_trends[:3],
@@ -185,9 +205,15 @@ class ResearchAgent:
             timestamp=datetime.now().isoformat()
         )
 
-    def format_context_for_document(self, context: ResearchContext, document_content: str) -> str:
-        """Format research context to enhance document content for auditor analysis."""
-        if not context.market_trends and not context.competitors and not context.technical_insights:
+    def format_context_for_document(
+        self, context: ResearchContext, document_content: str
+    ) -> str:
+        """Formats research context to enhance document content for auditor analysis."""
+        if (
+            not context.market_trends
+            and not context.competitors
+            and not context.technical_insights
+        ):
             return document_content
 
         enhanced_content = document_content

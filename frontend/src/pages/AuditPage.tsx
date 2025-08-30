@@ -36,6 +36,7 @@ export const AuditPage = () => {
 			<button
 				data-testid="start-run"
 				onClick={startAudit}
+				type="button"
 				disabled={starting}
 				className="px-3 py-2 border rounded disabled:opacity-50"
 			>

@@ -203,6 +203,7 @@ export interface UIConfiguration {
   readonly host: string;
   readonly port: number;
   readonly docsPath: string;
+  readonly projectId: string;
   readonly autoRefresh: boolean;
   readonly debug: boolean;
   readonly theme: 'light' | 'dark' | 'auto';
