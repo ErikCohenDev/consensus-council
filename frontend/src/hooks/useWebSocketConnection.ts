@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { getWebSocketService } from '@/services/websocketService'
-import { useAppActions } from '@/stores/appStore'
+import { useAppActions, useAppStore } from '@/stores/appStore'
 import type { NotificationMessage, CouncilMemberInfo } from '@shared/types/core'
 // import { Schemas, parseWithSchema } from '@shared/schemas/validation'
 
@@ -49,9 +49,13 @@ export const useWebSocketConnection = () => {
     setError,
     incrementErrorCount,
   } = useAppActions()
+  const config = useAppStore((s) => s.configuration)
 
   useEffect(() => {
-    const ws = getWebSocketService()
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws?projectId=${encodeURIComponent(
+      config.projectId || 'local'
+    )}`
+    const ws = getWebSocketService({ url: wsUrl })
 
     const offConn = ws.onConnection((connected) => {
       setConnectionStatus(connected ? 'connected' : 'disconnected')
@@ -128,6 +132,7 @@ export const useWebSocketConnection = () => {
     addNotification,
     setError,
     incrementErrorCount,
+    config.projectId,
   ])
 }
 

@@ -1,8 +1,8 @@
-import { useUIState, useAppActions } from '@/stores/appStore'
+import { useUIState, useAppActions, useAppStore } from '@/stores/appStore'
 
 export const SettingsPage = () => {
   const { theme } = useUIState()
-  const { setTheme } = useAppActions()
+  const { setTheme, updateConfiguration } = useAppActions()n  const configuration = useAppStore((s) => s.configuration)
 
   return (
     <div className="space-y-4">
@@ -17,6 +17,25 @@ export const SettingsPage = () => {
           <option value="auto">Auto</option>
           <option value="light">Light</option>
           <option value="dark">Dark</option>
+
+      <div className="border rounded p-3 space-y-2">
+        <div className="font-medium">Project</div>
+        <label className="block text-sm opacity-80">Project ID</label>
+        <input
+          className="border rounded px-2 py-1 w-full bg-transparent"
+          value={configuration.projectId || ''}
+          onChange={(e) => updateConfiguration({ projectId: e.target.value })}
+          placeholder="local"
+        />
+        <label className="block text-sm opacity-80 mt-2">Docs Path</label>
+        <input
+          className="border rounded px-2 py-1 w-full bg-transparent"
+          value={configuration.docsPath || ''}
+          onChange={(e) => updateConfiguration({ docsPath: e.target.value })}
+          placeholder="./docs"
+        />
+        <p className="text-xs opacity-70">WebSocket connections will scope to the Project ID.</p>
+      </div>
         </select>
       </div>
     </div>

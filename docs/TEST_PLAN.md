@@ -15,6 +15,7 @@ Owner: QA/Eng • Status: Draft
 - Contract/Schema: Validate structured outputs and WebSocket payloads with Zod/Pydantic schemas.
 - Frontend Unit: Zustand store selectors/actions, WebSocket service (reconnect, queue, heartbeat), hooks, simple components.
 - Frontend Integration: Simulated WS event flow updates UI state (status_update, document_audit_started/completed, audit_completed, error).
+- E2E (Playwright): Start a run from the Audit page, observe status transition via real WS + API. Basic smoke across nav/pages.
 
 ## Coverage Targets
 
@@ -25,6 +26,7 @@ Owner: QA/Eng • Status: Draft
 
 - Backend: `pytest --maxfail=1 --disable-warnings -q --cov=src/llm_council --cov-report=term-missing`.
 - Frontend: `cd frontend && npm run test:coverage` (Vitest + jsdom).
+- Frontend E2E (local/dev): `cd frontend && npx playwright install && npm run e2e` (ensure backend on :8000).
 
 ## Critical Test Cases (Mapping)
 

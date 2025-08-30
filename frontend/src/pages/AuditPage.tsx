@@ -10,10 +10,12 @@ export const AuditPage = () => {
     setStarting(true)
     setError(null)
     try {
-      // Create audit via RESTful API
-      const res = await fetch('/api/audits', {
+      // Create a run for a simple local project (MVP)
+      const projectId = 'local'
+      const res = await fetch(`/api/projects/${projectId}/runs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // Include docsPath as a fallback server-side for MVP
         body: JSON.stringify({ docsPath: './docs', stage: undefined, model: 'gpt-4o' }),
       })
       if (!res.ok) throw new Error(`Failed to start audit (${res.status})`)
@@ -28,6 +30,7 @@ export const AuditPage = () => {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Audit</h1>
       <button
+        data-testid="start-run"
         onClick={startAudit}
         disabled={starting}
         className="px-3 py-2 border rounded disabled:opacity-50"

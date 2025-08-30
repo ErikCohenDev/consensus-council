@@ -120,6 +120,7 @@ const initialState: AppState = {
     host: 'localhost',
     port: 8000,
     docsPath: './docs',
+    projectId: 'local',
     autoRefresh: true,
     debug: false,
     theme: 'auto',

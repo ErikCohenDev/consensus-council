@@ -136,3 +136,5 @@ cython_debug/
 .venv/
 .pytest_cache/
 .claude/
+node_modules/
+frontend/node_modules/
