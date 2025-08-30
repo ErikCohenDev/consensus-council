@@ -56,7 +56,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
 						<span>Theme:</span>
 						<select
 							value={theme}
-							onChange={(e) => setTheme(e.target.value as any)}
+							onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'auto')}
 							className="border rounded px-2 py-1 bg-transparent"
 						>
 							<option value="auto">Auto</option>

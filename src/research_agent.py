@@ -6,17 +6,20 @@ inform document auditing with real-world context.
 """
 from __future__ import annotations
 
-import os
 import logging
+import os
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Dict, List, Optional, Any
 from abc import ABC, abstractmethod
 
 # Optional import for tavily - will be imported dynamically when needed
 try:
     from tavily import TavilyClient
+    TAVILY_AVAILABLE = True
 except ImportError:
     TavilyClient = None
+    TAVILY_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -55,16 +58,15 @@ class TavilyProvider(SearchProvider):
         try:
             if TavilyClient is None:
                 raise ImportError("Tavily not available")
-            
+
             client = TavilyClient(api_key=self.api_key)
             response = client.search(
                 query=query,
-                max_results=max_results,
-                include_domains=None,
-                exclude_domains=None
+                search_depth="advanced",
+                max_results=max_results
             )
             return response
-            
+
         except (ImportError, ValueError, KeyError, ConnectionError):
             logger.warning("Tavily search failed, using fallback mock data")
             # Return mock data in the expected format
@@ -72,13 +74,20 @@ class TavilyProvider(SearchProvider):
                 'results': [
                     {
                         'title': f'Mock Market Research: {query}',
-                        'content': f'Mock market intelligence data for query: {query}. This includes competitive analysis, market trends, and relevant industry insights.',
+                        'content': (
+                            f'Mock market intelligence data for query: {query}. '
+                            'This includes competitive analysis, market trends, '
+                            'and relevant industry insights.'
+                        ),
                         'url': 'https://example.com/mock-research',
                         'score': 0.8
                     },
                     {
                         'title': f'Industry Analysis: {query}',
-                        'content': f'Comprehensive industry analysis covering market size, growth trends, and key players related to: {query}.',
+                        'content': (
+                            f'Comprehensive industry analysis covering market size, '
+                            f'growth trends, and key players related to: {query}.'
+                        ),
                         'url': 'https://example.com/industry-analysis',
                         'score': 0.7
                     }
@@ -118,7 +127,7 @@ class ResearchAgent:
                 technical_insights=[],
                 sources=[],
                 query_used="",
-                timestamp=""
+                timestamp=datetime.now().isoformat()
             )
 
         # Extract key terms from document to build search query
@@ -154,8 +163,6 @@ class ResearchAgent:
 
     def _process_search_results(self, search_results: Dict[str, Any], query: str) -> ResearchContext:
         """Process raw search results into structured research context."""
-        from datetime import datetime
-
         market_trends = []
         competitors = []
         technical_insights = []
@@ -169,16 +176,16 @@ class ResearchAgent:
             sources.append(f"{title}: {url}")
 
             # Categorize insights based on content
-            if any(term in content.lower() for term in ["market", "growth", "trend"]):
-                market_trends.append(content[:100] + "..." if len(content) > 100 else content)
-            elif any(term in content.lower() for term in ["competitor", "github", "vs", "alternative"]):
-                competitors.append(title)
-            elif any(term in content.lower() for term in ["technology", "technical", "architecture"]):
-                technical_insights.append(content[:100] + "..." if len(content) > 100 else content)
+            if any(word in content.lower() for word in ["trend", "growth", "market"]):
+                market_trends.append(content[:200])
+            elif any(word in content.lower() for word in ["competitor", "alternative", "vs"]):
+                competitors.append(content[:200])
+            else:
+                technical_insights.append(content[:200])
 
         return ResearchContext(
             market_trends=market_trends[:3],
-            competitors=competitors[:5],
+            competitors=competitors[:3],
             technical_insights=technical_insights[:3],
             sources=sources,
             query_used=query,

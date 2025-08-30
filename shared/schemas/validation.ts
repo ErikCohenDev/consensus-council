@@ -246,21 +246,23 @@ export const ModelConfigurationSchema = z.object({
 }).readonly()
 
 // Error schemas
-export const AppErrorSchema = z.object({
+const AppErrorBaseSchema = z.object({
   code: z.string().min(1),
   message: z.string().min(1),
   details: z.record(z.string(), z.unknown()).optional(),
   timestamp: TimestampSchema,
   stack: z.string().optional(),
-}).readonly()
+})
 
-export const ValidationErrorSchema = AppErrorSchema.extend({
+export const AppErrorSchema = AppErrorBaseSchema.readonly()
+
+export const ValidationErrorSchema = AppErrorBaseSchema.extend({
   code: z.literal('VALIDATION_ERROR'),
   field: z.string().min(1),
   value: z.unknown(),
 }).readonly()
 
-export const NetworkErrorSchema = AppErrorSchema.extend({
+export const NetworkErrorSchema = AppErrorBaseSchema.extend({
   code: z.literal('NETWORK_ERROR'),
   statusCode: z.number().int().min(100).max(599),
   method: z.string().min(1),

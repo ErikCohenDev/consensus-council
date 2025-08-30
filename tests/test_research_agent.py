@@ -1,1 +1,30 @@
-"""Tests for ResearchAgent integration (R-PRD-010).\n"""import asyncio\nfrom src.llm_council.research_agent import ResearchAgent, ResearchContext\n\n\ndef test_research_agent_disabled_returns_empty():\n    """Test that a disabled research agent returns an empty context."""\n    agent = ResearchAgent(provider='tavily', enabled=False)\n    ctx = asyncio.run(agent.gather_context('Any content', stage='vision'))\n    assert isinstance(ctx, ResearchContext)\n    assert ctx.market_trends == []\n    assert ctx.competitors == []\n    assert ctx.technical_insights == []\n\n\ndef test_research_agent_enabled_uses_fallback_and_formats():\n    """Test that an enabled research agent uses fallback data and formats it."""\n    # Provide a dummy API key so provider init does not fail\n    agent = ResearchAgent(provider='tavily', api_key='test-key', enabled=True)\n    content = 'AI document review CLI vision'\n    ctx = asyncio.run(agent.gather_context(content, stage='vision'))\n\n    # Fallback path returns some structured results\n    assert isinstance(ctx, ResearchContext)\n    assert ctx.query_used\n    assert isinstance(ctx.sources, list)\n\n    enhanced = agent.format_context_for_document(ctx, '# Vision\nBody')\n    assert 'Research Context' in enhanced\n    assert 'Market' in enhanced or 'Competitive' in enhanced or 'Technical' in enhanced\n\n
+"""Tests for ResearchAgent integration (R-PRD-010)."""
+import asyncio
+from src.llm_council.research_agent import ResearchAgent, ResearchContext
+
+
+def test_research_agent_disabled_returns_empty():
+    """Test that a disabled research agent returns an empty context."""
+    agent = ResearchAgent(provider='tavily', enabled=False)
+    ctx = asyncio.run(agent.gather_context('Any content', stage='vision'))
+    assert isinstance(ctx, ResearchContext)
+    assert ctx.market_trends == []
+    assert ctx.competitors == []
+    assert ctx.technical_insights == []
+
+
+def test_research_agent_enabled_uses_fallback_and_formats():
+    """Test that an enabled research agent uses fallback data and formats it."""
+    # Provide a dummy API key so provider init does not fail
+    agent = ResearchAgent(provider='tavily', api_key='test-key', enabled=True)
+    content = 'AI document review CLI vision'
+    ctx = asyncio.run(agent.gather_context(content, stage='vision'))
+
+    # Fallback path returns some structured results
+    assert isinstance(ctx, ResearchContext)
+    assert ctx.query_used
+    assert isinstance(ctx.sources, list)
+
+    enhanced = agent.format_context_for_document(ctx, '# Vision\nBody')
+    assert 'Research Context' in enhanced
+    assert 'Market' in enhanced or 'Competitive' in enhanced or 'Technical' in enhanced

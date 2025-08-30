@@ -133,122 +133,111 @@ const initialState: AppState = {
 
 export const useAppStore = create<AppStore>()(
 	devtools(
-		persist(
-			(set, get) => ({
-				...initialState,
+		(set, get) => ({
+			...initialState,
 
-				// UI Actions
-				setTheme: (theme) => {
-					set((state) => ({ ...state, theme }))
+			// UI Actions
+			setTheme: (theme) => {
+				set((state) => ({ ...state, theme }))
 
-					// Update DOM class for theme
-					const root = document.documentElement
-					if (theme === 'dark') {
+				// Update DOM class for theme
+				const root = document.documentElement
+				if (theme === 'dark') {
+					root.classList.add('dark')
+				} else if (theme === 'light') {
+					root.classList.remove('dark')
+				} else {
+					// Auto theme - check system preference
+					const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+					if (prefersDark) {
 						root.classList.add('dark')
-					} else if (theme === 'light') {
-						root.classList.remove('dark')
 					} else {
-						// Auto theme - check system preference
-						const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-						if (prefersDark) {
-							root.classList.add('dark')
-						} else {
-							root.classList.remove('dark')
-						}
+						root.classList.remove('dark')
 					}
-				},
+				}
+			},
 
-				toggleSidebar: () =>
-					set((state) => ({ ...state, sidebarCollapsed: !state.sidebarCollapsed })),
+			toggleSidebar: () =>
+				set((state) => ({ ...state, sidebarCollapsed: !state.sidebarCollapsed })),
 
-				setCurrentPage: (page) => set((state) => ({ ...state, currentPage: page })),
+			setCurrentPage: (page) => set((state) => ({ ...state, currentPage: page })),
 
-				// Connection Actions
-				setConnectionStatus: (connectionStatus) => {
-					const isConnected = connectionStatus === 'connected'
-					set((state) => ({
-						...state,
-						connectionStatus,
-						isConnected,
-						lastHeartbeat: isConnected ? Date.now() : state.lastHeartbeat,
-					}))
-				},
+			// Connection Actions
+			setConnectionStatus: (connectionStatus) => {
+				const isConnected = connectionStatus === 'connected'
+				set((state) => ({
+					...state,
+					connectionStatus,
+					isConnected,
+					lastHeartbeat: isConnected ? Date.now() : state.lastHeartbeat,
+				}))
+			},
 
-				updateHeartbeat: () => set((state) => ({ ...state, lastHeartbeat: Date.now() })),
+			updateHeartbeat: () => set((state) => ({ ...state, lastHeartbeat: Date.now() })),
 
-				// Pipeline Actions
-				setPipelineProgress: (pipelineProgress) => set((state) => ({ ...state, pipelineProgress })),
+			// Pipeline Actions
+			setPipelineProgress: (pipelineProgress) => set((state) => ({ ...state, pipelineProgress })),
 
-				setAuditRunning: (isAuditRunning) => set((state) => ({ ...state, isAuditRunning })),
+			setAuditRunning: (isAuditRunning) => set((state) => ({ ...state, isAuditRunning })),
 
-				setCurrentAuditStage: (currentAuditStage) =>
-					set((state) => ({ ...state, currentAuditStage })),
+			setCurrentAuditStage: (currentAuditStage) =>
+				set((state) => ({ ...state, currentAuditStage })),
 
-				// Council Actions
-				setCouncilMembers: (councilMembers) => set((state) => ({ ...state, councilMembers })),
+			// Council Actions
+			setCouncilMembers: (councilMembers) => set((state) => ({ ...state, councilMembers })),
 
-				updateCouncilMember: (memberId, updates) =>
-					set((state) => ({
-						...state,
-						councilMembers: state.councilMembers.map((member) =>
-							member.memberId === memberId ? { ...member, ...updates } : member
-						),
-					})),
+			updateCouncilMember: (memberId, updates) =>
+				set((state) => ({
+					...state,
+					councilMembers: state.councilMembers.map((member) =>
+						member.memberId === memberId ? { ...member, ...updates } : member
+					),
+				})),
 
-				setActiveDebateSession: (activeDebateSession) =>
-					set((state) => ({ ...state, activeDebateSession })),
+			setActiveDebateSession: (activeDebateSession) =>
+				set((state) => ({ ...state, activeDebateSession })),
 
-				addDebateToHistory: (session) =>
-					set((state) => ({
-						...state,
-						debateHistory: [session, ...state.debateHistory.slice(0, 19)], // Keep last 20
-					})),
+			addDebateToHistory: (session) =>
+				set((state) => ({
+					...state,
+					debateHistory: [session, ...state.debateHistory.slice(0, 19)], // Keep last 20
+				})),
 
-				// Notification Actions
-				addNotification: (notification) =>
-					set((state) => ({
-						...state,
-						notifications: [notification, ...state.notifications.slice(0, 99)], // Keep last 100
-						unreadCount: state.unreadCount + 1,
-					})),
+			// Notification Actions
+			addNotification: (notification) =>
+				set((state) => ({
+					...state,
+					notifications: [notification, ...state.notifications.slice(0, 99)], // Keep last 100
+					unreadCount: state.unreadCount + 1,
+				})),
 
-				removeNotification: (timestamp) =>
-					set((state) => ({
-						...state,
-						notifications: state.notifications.filter((n) => n.timestamp !== timestamp),
-					})),
+			removeNotification: (timestamp) =>
+				set((state) => ({
+					...state,
+					notifications: state.notifications.filter((n) => n.timestamp !== timestamp),
+				})),
 
-				clearNotifications: () => set((state) => ({ ...state, notifications: [], unreadCount: 0 })),
+			clearNotifications: () => set((state) => ({ ...state, notifications: [], unreadCount: 0 })),
 
-				markNotificationsRead: () => set((state) => ({ ...state, unreadCount: 0 })),
+			markNotificationsRead: () => set((state) => ({ ...state, unreadCount: 0 })),
 
-				// Configuration Actions
-				updateConfiguration: (config) =>
-					set((state) => ({
-						...state,
-						configuration: { ...state.configuration, ...config },
-					})),
+			// Configuration Actions
+			updateConfiguration: (config) =>
+				set((state) => ({
+					...state,
+					configuration: { ...state.configuration, ...config },
+				})),
 
-				// Error Actions
-				setError: (lastError) => set((state) => ({ ...state, lastError })),
+			// Error Actions
+			setError: (lastError) => set((state) => ({ ...state, lastError })),
 
-				incrementErrorCount: () => set((state) => ({ ...state, errorCount: state.errorCount + 1 })),
+			incrementErrorCount: () => set((state) => ({ ...state, errorCount: state.errorCount + 1 })),
 
-				clearErrors: () => set((state) => ({ ...state, lastError: null, errorCount: 0 })),
+			clearErrors: () => set((state) => ({ ...state, lastError: null, errorCount: 0 })),
 
-				// Utility Actions
-				reset: () => set(initialState),
-			}),
-			{
-				name: 'llm-council-app-store',
-				partialize: (state) => ({
-					theme: state.theme,
-					sidebarCollapsed: state.sidebarCollapsed,
-					configuration: state.configuration,
-					debateHistory: state.debateHistory.slice(0, 10), // Persist only recent history
-				}),
-			}
-		),
+			// Utility Actions
+			reset: () => set(initialState),
+		}),
 		{
 			name: 'AppStore',
 		}

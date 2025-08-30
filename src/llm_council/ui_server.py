@@ -26,7 +26,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .cli import AuditCommand, DOCUMENT_STAGE_MAPPING
+from .constants import DOCUMENT_STAGE_MAPPING
 from .council_members import Council, CouncilMember
 from .observability import get_tracer, setup_tracing
 
@@ -374,6 +374,9 @@ async def create_audit(req: StartAuditRequest):
                 "status": current_pipeline_status.model_dump(),
             }
         )
+        # Import AuditCommand only when needed to avoid circular imports
+        from .cli import AuditCommand
+        
         # Initialize audit command
         audit_cmd = AuditCommand(
             docs_path=Path(req.docsPath or "./docs"),

@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Optional, Any, Protocol
 from pathlib import Path
 
-from .schemas import AuditorResponse
+from schemas import AuditorResponse
 
 
 class IAuditorProvider(Protocol):
@@ -18,17 +18,14 @@ class IAuditorProvider(Protocol):
 
     async def execute_audit(self, prompt: str, stage: str) -> AuditorResponse:
         """Execute audit and return structured response."""
-        pass
 
     @property
     def provider_name(self) -> str:
         """Get the provider name (e.g., 'openai', 'anthropic')."""
-        pass
 
     @property
     def model_name(self) -> str:
         """Get the specific model name."""
-        pass
 
 
 class IConsensusEngine(Protocol):
@@ -40,11 +37,9 @@ class IConsensusEngine(Protocol):
         weights: Optional[Dict[str, float]] = None
     ) -> Dict[str, Any]:
         """Calculate consensus from multiple auditor responses."""
-        pass
 
     def get_algorithm_name(self) -> str:
         """Get the name of the consensus algorithm."""
-        pass
 
 
 class IAlignmentValidator(Protocol):
@@ -58,7 +53,6 @@ class IAlignmentValidator(Protocol):
         target_stage: str
     ) -> Dict[str, Any]:
         """Validate alignment between two documents."""
-        pass
 
 
 class IResearchProvider(Protocol):
@@ -66,12 +60,10 @@ class IResearchProvider(Protocol):
 
     async def search(self, query: str, max_results: int = 5) -> Dict[str, Any]:
         """Search for information and return structured results."""
-        pass
 
     @property
     def provider_name(self) -> str:
         """Get the research provider name."""
-        pass
 
 
 class ICacheService(Protocol):
@@ -79,15 +71,12 @@ class ICacheService(Protocol):
 
     async def get(self, key: str) -> Optional[Any]:
         """Get cached value by key."""
-        pass
 
     async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
         """Set cached value with optional TTL."""
-        pass
 
     async def clear(self, pattern: Optional[str] = None) -> None:
         """Clear cache entries, optionally by pattern."""
-        pass
 
 
 class IDocumentLoader(Protocol):
@@ -95,11 +84,9 @@ class IDocumentLoader(Protocol):
 
     def load_documents(self, docs_path: Path) -> Dict[str, str]:
         """Load documents from the specified path."""
-        pass
 
     def get_supported_extensions(self) -> List[str]:
         """Get list of supported file extensions."""
-        pass
 
 
 class INotificationService(Protocol):
@@ -107,11 +94,9 @@ class INotificationService(Protocol):
 
     async def notify_status_change(self, event_type: str, data: Dict[str, Any]) -> None:
         """Send notification about status changes."""
-        pass
 
     async def notify_error(self, error: Exception, context: Dict[str, Any]) -> None:
         """Send error notification."""
-        pass
 
 
 class IMetricsCollector(Protocol):
@@ -119,15 +104,12 @@ class IMetricsCollector(Protocol):
 
     def record_audit_duration(self, duration: float, stage: str, provider: str) -> None:
         """Record audit execution duration."""
-        pass
 
     def record_cost(self, cost: float, provider: str, tokens_used: int) -> None:
         """Record cost and token usage."""
-        pass
 
     def get_metrics_summary(self) -> Dict[str, Any]:
         """Get summary of collected metrics."""
-        pass
 
 
 # Abstract base classes for core components
@@ -150,7 +132,6 @@ class BaseAuditOrchestrator(ABC):
     @abstractmethod
     async def execute_audit(self, stage: str, content: str) -> Dict[str, Any]:
         """Execute audit for a given stage and content."""
-        pass
 
 
 class BaseCouncilMember(ABC):
@@ -171,7 +152,6 @@ class BaseCouncilMember(ABC):
     @abstractmethod
     async def provide_review(self, document: str, stage: str) -> Dict[str, Any]:
         """Provide review of the document."""
-        pass
 
     @abstractmethod
     async def respond_to_peers(
@@ -181,7 +161,6 @@ class BaseCouncilMember(ABC):
         stage: str
     ) -> Dict[str, Any]:
         """Respond to peer feedback."""
-        pass
 
 
 class BaseUIService(ABC):
@@ -190,12 +169,10 @@ class BaseUIService(ABC):
     @abstractmethod
     async def handle_event(self, event_type: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle UI events and return appropriate responses."""
-        pass
 
     @abstractmethod
     def get_service_name(self) -> str:
         """Get the service name for identification."""
-        pass
 
 
 # Configuration interfaces
@@ -205,15 +182,12 @@ class IConfigurationProvider(Protocol):
 
     def get_config(self, key: str, default: Any = None) -> Any:
         """Get configuration value by key."""
-        pass
 
     def get_section(self, section: str) -> Dict[str, Any]:
         """Get entire configuration section."""
-        pass
 
     def reload(self) -> None:
         """Reload configuration from source."""
-        pass
 
 
 # Event system interfaces
@@ -223,7 +197,6 @@ class IEventPublisher(Protocol):
 
     async def publish(self, event_type: str, data: Dict[str, Any]) -> None:
         """Publish an event."""
-        pass
 
 
 class IEventSubscriber(Protocol):
@@ -235,11 +208,9 @@ class IEventSubscriber(Protocol):
         handler: Callable
     ) -> str:
         """Subscribe to event type and return subscription ID."""
-        pass
 
     async def unsubscribe(self, subscription_id: str) -> None:
         """Unsubscribe from events."""
-        pass
 
 
 # Factory interfaces
@@ -254,11 +225,9 @@ class IAuditorProviderFactory(Protocol):
         config: Dict[str, Any]
     ) -> IAuditorProvider:
         """Create auditor provider instance."""
-        pass
 
     def get_supported_providers(self) -> List[str]:
         """Get list of supported provider types."""
-        pass
 
 
 __all__ = [

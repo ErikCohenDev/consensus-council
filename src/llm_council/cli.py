@@ -15,21 +15,12 @@ from typing import Dict, Optional
 import click
 
 from .alignment import AlignmentValidator
+from .constants import DOCUMENT_STAGE_MAPPING
 from .orchestrator import AuditorOrchestrator, OrchestrationResult
 from .pipeline import PipelineOrchestrator, RevisionStrategy
 from .research_agent import ResearchAgent
-from .ui_server import UIConfig, run_ui_server
 
 logger = logging.getLogger(__name__)
-
-DOCUMENT_STAGE_MAPPING = {
-    "RESEARCH_BRIEF.md": "research_brief",
-    "MARKET_SCAN.md": "market_scan",
-    "VISION.md": "vision",
-    "PRD.md": "prd",
-    "ARCHITECTURE.md": "architecture",
-    "IMPLEMENTATION_PLAN.md": "implementation_plan",
-}
 
 
 @dataclass
@@ -419,6 +410,9 @@ def pipeline_cmd(
 def ui_cmd(host: str, port: int, docs_path: str, debug: bool):
     """Launch the web-based UI server for interactive council management."""
     try:
+        # Import UI components only when needed to avoid circular imports
+        from .ui_server import UIConfig, run_ui_server
+        
         config = UIConfig(host=host, port=port, docs_path=docs_path, debug=debug)
 
         click.echo("🚀 Starting LLM Council UI server...")

@@ -113,9 +113,10 @@ class NotificationService(INotificationService):
         }
 
         for event_type, notification_type in event_mappings.items():
-            handler = lambda data, ntype=notification_type: self._handle_system_event(
-                ntype, data
-            )
+
+            async def handler(data, ntype=notification_type):
+                await self._handle_system_event(ntype, data)
+
             await self._event_subscriber.subscribe(event_type, handler)
 
     async def _handle_system_event(self, notification_type: NotificationType, data: Dict[str, Any]) -> None:

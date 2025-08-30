@@ -84,8 +84,8 @@ class TavilyProvider(SearchProvider):
                     {
                         'title': f'Industry Analysis: {query}',
                         'content': (
-                            'Comprehensive industry analysis covering market size, '
-                            'growth trends, and key players related to: {query}.'
+                            f'Comprehensive industry analysis covering market size, '
+                            f'growth trends, and key players related to: {query}.'
                         ),
                         'url': 'https://example.com/industry-analysis',
                         'score': 0.7
@@ -117,9 +117,7 @@ class ResearchAgent:
         else:
             raise ValueError(f"Unsupported research provider: {provider}")
 
-    async def gather_context(
-        self, document_content: str, stage: str = "vision"
-    ) -> ResearchContext:
+    async def gather_context(self, document_content: str, stage: str = "vision") -> ResearchContext:
         """Gather internet context relevant to the document and stage."""
         if not self.enabled or not self._search_provider:
             return ResearchContext(
@@ -162,9 +160,7 @@ class ResearchAgent:
 
         return " ".join(keywords[:3])  # Limit to top 3 concepts
 
-    def _process_search_results(
-        self, search_results: Dict[str, Any], query: str
-    ) -> ResearchContext:
+    def _process_search_results(self, search_results: Dict[str, Any], query: str) -> ResearchContext:
         """Process raw search results into structured research context."""
         market_trends = []
         competitors = []
@@ -179,26 +175,16 @@ class ResearchAgent:
             sources.append(f"{title}: {url}")
 
             # Categorize insights based on content
-            if any(term in content.lower() for term in ["market", "growth", "trend"]):
-                market_trends.append(
-                    content[:100] + "..." if len(content) > 100 else content
-                )
-            elif any(
-                term in content.lower()
-                for term in ["competitor", "github", "vs", "alternative"]
-            ):
-                competitors.append(title)
-            elif any(
-                term in content.lower()
-                for term in ["technology", "technical", "architecture"]
-            ):
-                technical_insights.append(
-                    content[:100] + "..." if len(content) > 100 else content
-                )
+            if any(word in content.lower() for word in ["trend", "growth", "market"]):
+                market_trends.append(content[:200])
+            elif any(word in content.lower() for word in ["competitor", "alternative", "vs"]):
+                competitors.append(content[:200])
+            else:
+                technical_insights.append(content[:200])
 
         return ResearchContext(
             market_trends=market_trends[:3],
-            competitors=competitors[:5],
+            competitors=competitors[:3],
             technical_insights=technical_insights[:3],
             sources=sources,
             query_used=query,
