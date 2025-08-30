@@ -78,7 +78,8 @@ export const ContextPage = () => {
   const [ideaText, setIdeaText] = useState('')
   const [questions, setQuestions] = useState<ContextQuestion[]>([])
   const [savedIdeas, setSavedIdeas] = useState<SavedIdea[]>([])
-  const [viewMode, setViewMode] = useState<ViewMode>('form');
+  const [viewMode, setViewMode] = useState<ViewMode>('graph');
+  const [graphData, setGraphData] = useState<any>(null);
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -107,6 +108,19 @@ export const ContextPage = () => {
     try {
       const raw = localStorage.getItem(LS_KEY)
       if (raw) setSavedIdeas(JSON.parse(raw))
+    } catch (_) {}
+
+    // Load context graph from IdeaPage
+    try {
+      const graphRaw = localStorage.getItem('llm-council.current-graph')
+      if (graphRaw) {
+        const graph = JSON.parse(graphRaw)
+        setGraphData(graph)
+        if (graph.nodes && graph.edges) {
+          setNodes(graph.nodes)
+          setEdges(graph.edges)
+        }
+      }
     } catch (_) {}
   }, [])
 
@@ -271,7 +285,7 @@ export const ContextPage = () => {
             </div>
           </div>
         ) : (
-          <div className="h-full w-full">
+          <div className="h-full w-full relative">
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -282,6 +296,52 @@ export const ContextPage = () => {
               <Background />
               <Controls />
             </ReactFlow>
+            
+            {graphData && (
+              <div className="absolute top-4 right-4 space-y-2">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-lg">
+                  <div className="text-sm font-medium mb-1">Context Graph</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    {nodes.length} entities, {edges.length} relationships
+                  </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    Confidence: {Math.round((graphData.confidence || 0) * 100)}%
+                  </div>
+                </div>
+                
+                <button
+                  type="button"
+                  className="w-full px-3 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                  onClick={async () => {
+                    if (!graphData) return
+                    try {
+                      const response = await fetch('/api/ideas/expand-research', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          graph: graphData,
+                          focus_areas: [],
+                          max_insights: 10
+                        }),
+                      })
+                      const result = await response.json()
+                      if (result.success) {
+                        // Update graph with expanded data
+                        setGraphData(result.data)
+                        if (result.data.nodes && result.data.edges) {
+                          setNodes(result.data.nodes)
+                          setEdges(result.data.edges)
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Research expansion failed:', error)
+                    }
+                  }}
+                >
+                  Expand with Research
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

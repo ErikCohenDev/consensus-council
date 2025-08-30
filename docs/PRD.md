@@ -111,3 +111,11 @@ Note: A minimal Web UI for real-time visualization is provided for developer erg
 - Provide project-centric endpoints and run snapshots for automation and UI:  
   `POST /api/projects/{projectId}/runs`, `GET /api/projects/{projectId}/runs/{runId}`  
   Legacy aliases (`/api/audits*`) remain during migration.
+
+### Idea Processing API Endpoints
+
+- **Idea-to-Context Pipeline**: Support project discovery through structured analysis
+  - `POST /api/ideas/extract-context` - Extract entities and relationships from idea text
+  - `POST /api/ideas/expand-research` - Enhance context graphs with targeted research insights
+  - ReactFlow-compatible JSON output for frontend graph visualization
+  - Local storage integration for seamless navigation flow

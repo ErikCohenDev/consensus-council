@@ -22,23 +22,26 @@ export const IdeaPage = () => {
 		const projectName = generateProjectName(ideaText)
 
 		try {
-			const response = await fetch('/api/audits', {
+			// Step 1: Extract context graph from idea
+			const response = await fetch('/api/ideas/extract-context', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					docsPath: './docs',
-					stage: 'research_brief',
-					model: 'gpt-4o',
-					research_context: true,
-					council_debate: true,
-					idea: ideaText,
+					text: ideaText,
 					project_name: projectName,
+					focus_areas: []
 				}),
 			})
 
 			const result = await response.json()
 			if (result.success) {
-				navigate('/documents')
+				// Store the graph data for context page
+				localStorage.setItem('llm-council.current-graph', JSON.stringify(result.data))
+				
+				// Navigate to context page to visualize and expand
+				navigate('/context')
+			} else {
+				console.error('Context extraction failed:', result.error)
 			}
 		} catch (error) {
 			console.error('Failed to start journey:', error)
@@ -97,7 +100,7 @@ export const IdeaPage = () => {
 								</>
 							) : (
 								<>
-									Start AI Research & Planning
+									Generate Context Graph
 									<RocketIcon className="w-5 h-5" />
 								</>
 							)}

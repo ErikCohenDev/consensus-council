@@ -8,6 +8,7 @@
 
 import { parseWithSchema, Schemas } from '@shared/schemas/validation'
 import type { NotificationMessage, WebSocketMessage } from '@shared/types/core'
+import { WS_CONFIG_DEFAULTS, WS_MESSAGE_TYPES, MESSAGE_PRIORITIES } from '@/constants/websocket'
 
 type MessageHandler = (message: NotificationMessage) => void
 type ConnectionHandler = (connected: boolean) => void
@@ -23,10 +24,10 @@ interface WebSocketServiceConfig {
 
 const DEFAULT_CONFIG: WebSocketServiceConfig = {
 	url: `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`,
-	reconnectInterval: 3000,
-	maxReconnectAttempts: 10,
-	heartbeatInterval: 30000,
-	messageQueueSize: 100,
+	reconnectInterval: WS_CONFIG_DEFAULTS.RECONNECT_INTERVAL,
+	maxReconnectAttempts: WS_CONFIG_DEFAULTS.MAX_RECONNECT_ATTEMPTS,
+	heartbeatInterval: WS_CONFIG_DEFAULTS.HEARTBEAT_INTERVAL,
+	messageQueueSize: WS_CONFIG_DEFAULTS.MESSAGE_QUEUE_SIZE,
 }
 
 export class WebSocketService {
@@ -133,8 +134,14 @@ export class WebSocketService {
 
 			if (notification) {
 				// Validate final notification before dispatch
-				const validated = parseWithSchema(Schemas.NotificationMessage, notification)
-				this.notifyMessageHandlers(validated)
+				try {
+					const validated = parseWithSchema(Schemas.NotificationMessage, notification)
+					this.notifyMessageHandlers(validated)
+				} catch (validationError) {
+					console.warn('[WebSocket] Notification validation failed:', validationError)
+					// Still notify handlers with raw notification to avoid silent failures
+					this.notifyMessageHandlers(notification)
+				}
 				return
 			}
 
@@ -172,44 +179,44 @@ export class WebSocketService {
 		let data: Record<string, unknown> = {}
 
 		switch (type) {
-			case 'status_update':
+			case WS_MESSAGE_TYPES.STATUS_UPDATE:
 				mappedType = 'status_update'
 				data = { ...(obj.status as object | undefined), raw: obj }
-				priority = 1
+				priority = MESSAGE_PRIORITIES.LOW
 				break
-			case 'council_initialized':
+			case WS_MESSAGE_TYPES.COUNCIL_INITIALIZED:
 				mappedType = 'status_update'
 				data = { councilInitialized: true, members: obj.members }
-				priority = 1
+				priority = MESSAGE_PRIORITIES.LOW
 				break
-			case 'document_audit_started':
+			case WS_MESSAGE_TYPES.DOCUMENT_AUDIT_STARTED:
 				mappedType = 'audit_started'
 				data = { document: obj.document }
-				priority = 2
+				priority = MESSAGE_PRIORITIES.MEDIUM
 				break
-			case 'document_audit_completed':
+			case WS_MESSAGE_TYPES.DOCUMENT_AUDIT_COMPLETED:
 				mappedType = 'audit_completed'
 				data = { document: obj.document, debate_result: obj.debate_result }
-				priority = 2
+				priority = MESSAGE_PRIORITIES.MEDIUM
 				break
-			case 'audit_completed':
+			case WS_MESSAGE_TYPES.AUDIT_COMPLETED:
 				mappedType = 'audit_completed'
 				data = { ...(obj.status as object | undefined), raw: obj }
-				priority = 2
+				priority = MESSAGE_PRIORITIES.MEDIUM
 				break
-			case 'error':
+			case WS_MESSAGE_TYPES.ERROR:
 				mappedType = 'error_occurred'
 				data = { message: obj.message ?? 'Unknown error', raw: obj }
-				priority = 3
+				priority = MESSAGE_PRIORITIES.HIGH
 				break
-			case 'heartbeat':
-			case 'ping':
+			case WS_MESSAGE_TYPES.HEARTBEAT:
+			case WS_MESSAGE_TYPES.PING:
 				// System messages aren't notifications
 				return null
 			default:
 				mappedType = 'system_alert'
 				data = { raw: obj }
-				priority = 1
+				priority = MESSAGE_PRIORITIES.LOW
 		}
 
 		return {
@@ -221,15 +228,27 @@ export class WebSocketService {
 	}
 
 	/**
+	 * Check if message matches WebSocketMessage shape
+	 */
+	private isWebSocketMessage(obj: unknown): obj is WebSocketMessage {
+		return (
+			obj != null &&
+			typeof obj === 'object' &&
+			'type' in obj &&
+			typeof (obj as Record<string, unknown>).type === 'string'
+		)
+	}
+
+	/**
 	 * Handle system messages (heartbeat, etc.)
 	 */
 	private handleSystemMessage(message: WebSocketMessage): void {
 		switch (message.type) {
-			case 'heartbeat':
-				this.sendMessage({ type: 'heartbeat_ack', timestamp: Date.now() })
+			case WS_MESSAGE_TYPES.HEARTBEAT:
+				this.sendMessage({ type: WS_MESSAGE_TYPES.HEARTBEAT_ACK, timestamp: Date.now() })
 				break
-			case 'ping':
-				this.sendMessage({ type: 'pong', timestamp: Date.now() })
+			case WS_MESSAGE_TYPES.PING:
+				this.sendMessage({ type: WS_MESSAGE_TYPES.PONG, timestamp: Date.now() })
 				break
 			default:
 				console.log('[WebSocket] Unknown system message:', message.type)
@@ -304,7 +323,7 @@ export class WebSocketService {
 
 		const delay = Math.min(
 			this.config.reconnectInterval * 2 ** (this.reconnectAttempts - 1),
-			30000 // Max 30 seconds
+			WS_CONFIG_DEFAULTS.MAX_RECONNECT_DELAY
 		)
 
 		console.log(`[WebSocket] Scheduling reconnect attempt ${this.reconnectAttempts} in ${delay}ms`)
@@ -334,7 +353,7 @@ export class WebSocketService {
 
 		this.heartbeatTimer = window.setInterval(() => {
 			if (this.isConnected) {
-				this.sendMessage({ type: 'ping' })
+				this.sendMessage({ type: WS_MESSAGE_TYPES.PING })
 			}
 		}, this.config.heartbeatInterval)
 	}
@@ -457,7 +476,7 @@ export class WebSocketService {
 		this.clearHeartbeat()
 
 		// Reconnect after a short delay
-		setTimeout(() => this.connect(), 100)
+		setTimeout(() => this.connect(), WS_CONFIG_DEFAULTS.INITIAL_RECONNECT_DELAY)
 	}
 
 	/**

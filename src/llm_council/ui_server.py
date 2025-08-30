@@ -21,144 +21,37 @@ from typing import Any, Dict, List, Optional
 
 import uvicorn
 import yaml
-import litellm
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
 from openai import AsyncOpenAI
 
 from .constants import DOCUMENT_STAGE_MAPPING
+from .constants.ui_server import (
+    DEFAULT_HOST, DEFAULT_PORT, DEFAULT_DOCS_PATH, 
+    ALLOWED_ORIGINS, API_MESSAGES, DEFAULT_COUNCIL_MEMBERS, ENV_VARS
+)
+from .constants.websocket import WS_MESSAGE_TYPES, WS_CLOSE_CODES
+from .models.ui_models import (
+    UIConfig, DocumentStatus, CouncilMemberStatus, DebateRoundStatus,
+    ResearchProgress, PipelineProgress, ApiResponse, StartAuditRequest,
+    RegisterProjectRequest, GenerateGraphRequest
+)
+from .models.idea_models import (
+    IdeaInput, ContextGraphData, ResearchExpansionRequest, 
+    ReactFlowGraph, ExpandedContextData, EntityData, RelationshipData, ResearchInsightData
+)
+from .services.websocket_manager import ConnectionManager
+from .services.model_catalog import ModelCatalogService
+from .services.entity_extractor import EntityExtractor
+from .services.research_expander import ResearchExpander
 from .council_members import Council, CouncilMember
 from .observability import get_tracer, setup_tracing
 from .graph_service import GraphService
 from .orchestrator import AuditorWorker
 
 
-class UIConfig(BaseModel):
-    """Configuration for UI server."""
-
-    host: str = "127.0.0.1"
-    port: int = 8000
-    docs_path: str = "./docs"
-    auto_refresh: bool = True
-    debug: bool = False
-
-
-class DocumentStatus(BaseModel):
-    """Status of a single document in the pipeline."""
-
-    name: str
-    stage: str
-    exists: bool
-    word_count: int
-    last_modified: Optional[datetime]
-    audit_status: str  # "pending", "in_progress", "completed", "failed"
-    consensus_score: Optional[float]
-    alignment_issues: int
-
-
-class CouncilMemberStatus(BaseModel):
-    """Status of a council member during debate."""
-
-    role: str
-    model_provider: str
-    model_name: str
-    current_activity: str  # "idle", "reviewing", "responding", "debating"
-    insights_contributed: int
-    agreements_made: int
-    questions_asked: int
-
-
-class DebateRoundStatus(BaseModel):
-    """Status of a single debate round."""
-
-    round_number: int
-    participants: List[str]
-    consensus_points: List[str]
-    disagreements: List[str]
-    questions_raised: List[str]
-    duration_seconds: float
-    status: str  # "in_progress", "completed"
-
-
-class ResearchProgress(BaseModel):
-    """Progress of research agent activities."""
-
-    stage: str
-    queries_executed: List[str]
-    sources_found: int
-    context_added: bool
-    duration_seconds: float
-    status: str  # "searching", "processing", "completed", "failed"
-
-
-class PipelineProgress(BaseModel):
-    """Overall pipeline progress and status."""
-
-    documents: List[DocumentStatus]
-    council_members: List[CouncilMemberStatus]
-    current_debate_round: Optional[DebateRoundStatus]
-    research_progress: List[ResearchProgress]
-    total_cost_usd: float
-    execution_time: float
-    overall_status: str  # "initializing", "running", "completed", "failed"
-
-
-class ConnectionManager:
-    """Manages WebSocket connections for real-time updates with optional scoping."""
-
-    def __init__(self):
-        # Each item: { "ws": WebSocket, "filters": {"projectId": str|None, "runId": str|None} }
-        self.active_connections: List[Dict[str, Any]] = []
-
-    async def connect(
-        self, websocket: WebSocket, filters: Optional[Dict[str, Optional[str]]] = None
-    ):
-        """Connect a new WebSocket client."""
-        await websocket.accept()
-        self.active_connections.append(
-            {"ws": websocket, "filters": filters or {"projectId": None, "runId": None}}
-        )
-
-    def disconnect(self, websocket: WebSocket):
-        """Disconnect a WebSocket client."""
-        self.active_connections = [
-            c for c in self.active_connections if c.get("ws") is not websocket
-        ]
-
-    async def send_update(self, message: Dict[str, Any]):
-        """Send update to all connected clients, honoring optional project/run filters."""
-        msg_proj = message.get("project_id") or message.get("projectId")
-        msg_run = (
-            message.get("run_id") or message.get("runId") or message.get("audit_id")
-        )
-        disconnected: List[Dict[str, Any]] = []
-        for entry in self.active_connections:
-            ws = entry["ws"]
-            flt = entry.get("filters") or {}
-            f_proj = flt.get("projectId")
-            f_run = flt.get("runId")
-            # deliver if no filters, or filters match message
-            deliver = True
-            if f_proj and msg_proj and f_proj != msg_proj:
-                deliver = False
-            if f_run and msg_run and f_run != msg_run:
-                deliver = False
-            if not deliver:
-                continue
-            try:
-                await ws.send_text(json.dumps(message))
-            except Exception:
-                disconnected.append(entry)
-
-        # Clean up disconnected clients
-        for entry in disconnected:
-            try:
-                self.active_connections.remove(entry)
-            except ValueError:
-                pass
 
 
 # Global instances
@@ -167,7 +60,7 @@ app = FastAPI(title="LLM Council UI", description="Visual interface for LLM Coun
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -196,34 +89,6 @@ current_project_id: Optional[str] = None
 projects_registry: Dict[str, str] = {}  # projectId -> docsPath
 
 
-class ApiResponse(BaseModel):
-    """API response model."""
-
-    success: bool = True
-    data: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-    timestamp: float = Field(default_factory=time.time)
-
-
-class StartAuditRequest(BaseModel):
-    """Request model for starting an audit."""
-
-    docsPath: Optional[str] = None
-    stage: Optional[str] = None
-    model: Optional[str] = "gpt-4o"
-
-
-class RegisterProjectRequest(BaseModel):
-    """Request model for registering a project."""
-
-    docsPath: str
-    projectId: Optional[str] = None
-
-class GenerateGraphRequest(BaseModel):
-    document: str
-    context: str
-    projectId: Optional[str] = None
-    auditId: Optional[str] = None
 
 def _pipeline_to_camel(p: PipelineProgress) -> Dict[str, Any]:
     """Convert pipeline progress to camelCase for UI."""
@@ -361,7 +226,7 @@ async def get_audit(audit_id: str):
             data={
                 "pipeline": _pipeline_to_camel(current_pipeline_status),
                 "metrics": _metrics_summary(),
-                "note": "Requested audit not active; returning current snapshot.",
+                "note": API_MESSAGES["REQUESTED_AUDIT_NOT_ACTIVE"],
             },
         )
     return ApiResponse(
@@ -388,14 +253,17 @@ async def create_audit(req: StartAuditRequest):
         current_pipeline_status.overall_status = "initializing"
         await connection_manager.send_update(
             {
-                "type": "status_update",
+                "type": WS_MESSAGE_TYPES["STATUS_UPDATE"],
                 "audit_id": current_audit_id,
                 "project_id": current_project_id,
                 "status": current_pipeline_status.model_dump(),
             }
         )
         # Import AuditCommand only when needed to avoid circular imports
-        from .cli import AuditCommand
+        try:
+            from .cli import AuditCommand
+        except ImportError:
+            from cli import AuditCommand
 
         # Initialize audit command
         audit_cmd = AuditCommand(
@@ -419,7 +287,7 @@ async def create_audit(req: StartAuditRequest):
         current_pipeline_status.overall_status = "failed"
         await connection_manager.send_update(
             {
-                "type": "error",
+                "type": WS_MESSAGE_TYPES["ERROR"],
                 "message": str(e),
                 "audit_id": current_audit_id,
                 "project_id": current_project_id,
@@ -456,7 +324,7 @@ async def start_project_run(project_id: str, req: StartAuditRequest):
     docs = projects_registry.get(project_id) or req.docsPath
     if not docs:
         raise HTTPException(
-            status_code=400, detail="Unknown project; provide docsPath or register project first"
+            status_code=400, detail=API_MESSAGES["UNKNOWN_PROJECT"]
         )
     # Use legacy creator under the hood but set current project id
     global current_project_id  # pylint: disable=global-statement
@@ -475,7 +343,7 @@ async def get_project_run(project_id: str, run_id: str):
         "metrics": _metrics_summary(),
     }
     if current_project_id != project_id or current_audit_id != run_id:
-        data["note"] = "Requested run not active; returning current snapshot."
+        data["note"] = API_MESSAGES["REQUESTED_RUN_NOT_ACTIVE"]
     return ApiResponse(success=True, data=data)
 
 
@@ -491,13 +359,145 @@ async def get_latest_run(_project_id: str):
     )
 
 
+@app.post("/api/ideas/extract-context")
+async def extract_idea_context(idea: IdeaInput):
+    """Extract entities and relationships from an idea to create context graph."""
+    
+    api_key = os.getenv(ENV_VARS["OPENAI_API_KEY"])
+    if not api_key:
+        raise HTTPException(status_code=500, detail=API_MESSAGES["OPENAI_KEY_MISSING"])
+
+    client = AsyncOpenAI(api_key=api_key)
+    
+    worker = AuditorWorker(
+        role="entity_extractor",
+        stage="context_extraction", 
+        client=client,
+        model="gpt-4o",
+    )
+    
+    extractor = EntityExtractor(worker)
+    
+    try:
+        context_graph = await extractor.extract_context_graph(
+            idea.text, 
+            additional_context=""
+        )
+        
+        # Convert to API response format
+        graph_data = ContextGraphData(
+            entities=[
+                EntityData(
+                    id=e.id, label=e.label, type=e.type, description=e.description,
+                    importance=e.importance, certainty=e.certainty
+                ) for e in context_graph.entities
+            ],
+            relationships=[
+                RelationshipData(
+                    id=r.id, source_id=r.source_id, target_id=r.target_id,
+                    type=r.type, label=r.label, strength=r.strength, description=r.description
+                ) for r in context_graph.relationships
+            ],
+            central_entity_id=context_graph.central_entity_id,
+            confidence_score=context_graph.confidence_score
+        )
+        
+        # Convert to ReactFlow format
+        reactflow_data = extractor.to_reactflow_format(context_graph)
+        
+        return ApiResponse(success=True, data={
+            "graph": graph_data.model_dump(),
+            "reactflow": reactflow_data,
+            "project_name": idea.project_name or "New Project"
+        })
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Context extraction failed: {str(e)}")
+
+
+@app.post("/api/ideas/expand-research") 
+async def expand_with_research(req: ResearchExpansionRequest):
+    """Expand context graph with targeted research insights."""
+    
+    api_key = os.getenv(ENV_VARS["OPENAI_API_KEY"])
+    if not api_key:
+        raise HTTPException(status_code=500, detail=API_MESSAGES["OPENAI_KEY_MISSING"])
+
+    client = AsyncOpenAI(api_key=api_key)
+    
+    auditor_worker = AuditorWorker(
+        role="research_expander",
+        stage="research_expansion",
+        client=client, 
+        model="gpt-4o",
+    )
+    
+    # Initialize research agent (simplified for MVP)
+    from .research_agent import ResearchAgent
+    research_agent = ResearchAgent()
+    
+    expander = ResearchExpander(auditor_worker, research_agent)
+    
+    try:
+        # Convert request data to internal format
+        from .services.entity_extractor import ContextGraph, Entity, Relationship
+        
+        original_graph = ContextGraph(
+            entities=[
+                Entity(
+                    id=e.id, label=e.label, type=e.type, description=e.description,
+                    importance=e.importance, certainty=e.certainty
+                ) for e in req.graph.entities
+            ],
+            relationships=[
+                Relationship(
+                    id=r.id, source_id=r.source_id, target_id=r.target_id, type=r.type,
+                    label=r.label, strength=r.strength, description=r.description
+                ) for r in req.graph.relationships
+            ],
+            central_entity_id=req.graph.central_entity_id,
+            confidence_score=req.graph.confidence_score
+        )
+        
+        expanded = await expander.expand_context(original_graph, req.focus_areas)
+        
+        # Convert back to API format
+        expanded_data = ExpandedContextData(
+            original_graph=req.graph,
+            insights=[
+                ResearchInsightData(
+                    entity_id=i.entity_id, insight_type=i.insight_type, title=i.title,
+                    content=i.content, sources=i.sources, relevance_score=i.relevance_score
+                ) for i in expanded.insights
+            ],
+            new_entities=[
+                EntityData(
+                    id=e.id, label=e.label, type=e.type, description=e.description,
+                    importance=e.importance, certainty=e.certainty
+                ) for e in expanded.new_entities
+            ],
+            new_relationships=[
+                RelationshipData(
+                    id=r.id, source_id=r.source_id, target_id=r.target_id, type=r.type,
+                    label=r.label, strength=r.strength, description=r.description
+                ) for r in expanded.new_relationships
+            ],
+            expansion_confidence=expanded.expansion_confidence
+        )
+        
+        return ApiResponse(success=True, data={"expanded_context": expanded_data.model_dump()})
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Research expansion failed: {str(e)}")
+
+
 @app.post("/api/context/graph")
 async def generate_graph(req: GenerateGraphRequest):
-    """Starts the process of generating and broadcasting graph data for a document."""
+    """Legacy endpoint - starts the process of generating and broadcasting graph data for a document."""
 
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = os.getenv(ENV_VARS["OPENAI_API_KEY"])
     if not api_key:
-        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set")
+        raise HTTPException(status_code=500, detail=API_MESSAGES["OPENAI_KEY_MISSING"])
 
     client = AsyncOpenAI(api_key=api_key)
 
@@ -521,7 +521,7 @@ async def generate_graph(req: GenerateGraphRequest):
 
     asyncio.create_task(stream_graph_data())
 
-    return ApiResponse(success=True, data={"message": "Graph generation started."})
+    return ApiResponse(success=True, data={"message": API_MESSAGES["GRAPH_GENERATION_STARTED"]})
 
 
 @app.websocket("/ws")
@@ -536,7 +536,7 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket.send_text(
             json.dumps(
                 {
-                    "type": "status_update",
+                    "type": WS_MESSAGE_TYPES["STATUS_UPDATE"],
                     "audit_id": current_audit_id,
                     "project_id": current_project_id,
                     "status": current_pipeline_status.model_dump(),
@@ -544,20 +544,39 @@ async def websocket_endpoint(websocket: WebSocket):
             )
         )
 
-        # Keep connection alive
+        # Keep connection alive and handle incoming messages
         while True:
-            await websocket.receive_text()
+            try:
+                message = await websocket.receive_text()
+                # Handle heartbeat/ping messages
+                try:
+                    msg_data = json.loads(message)
+                    if msg_data.get("type") in [WS_MESSAGE_TYPES["PING"], WS_MESSAGE_TYPES["HEARTBEAT"]]:
+                        response_type = (
+                            WS_MESSAGE_TYPES["PONG"] if msg_data.get("type") == WS_MESSAGE_TYPES["PING"] 
+                            else WS_MESSAGE_TYPES["HEARTBEAT_ACK"]
+                        )
+                        await websocket.send_text(json.dumps({
+                            "type": response_type,
+                            "timestamp": time.time()
+                        }))
+                except (json.JSONDecodeError, KeyError):
+                    # Ignore malformed messages
+                    pass
+            except Exception:
+                # Keep connection alive even if message processing fails
+                pass
     except WebSocketDisconnect:
         connection_manager.disconnect(websocket)
 
 
 async def run_audit_with_ui_updates(
-    audit_cmd: AuditCommand, audit_id: str, project_id: Optional[str]
+    audit_cmd, audit_id: str, project_id: Optional[str]
 ):
     """Run audit with real-time UI updates."""
     start_time = time.perf_counter()
     # Optional time-budget guardrail (seconds)
-    max_seconds = float(os.getenv("AUDIT_MAX_SECONDS", "0") or 0)
+    max_seconds = float(os.getenv(ENV_VARS["AUDIT_MAX_SECONDS"], "0") or 0)
 
     try:
         with tracer.start_as_current_span(
@@ -597,7 +616,7 @@ async def run_audit_with_ui_updates(
         current_pipeline_status.overall_status = "running"
         await connection_manager.send_update(
             {
-                "type": "status_update",
+                "type": WS_MESSAGE_TYPES["STATUS_UPDATE"],
                 "audit_id": audit_id,
                 "project_id": project_id,
                 "status": current_pipeline_status.model_dump(),
@@ -606,30 +625,15 @@ async def run_audit_with_ui_updates(
 
         # Initialize council members
         council = Council()
-        council.add_member(
-            CouncilMember("pm", "openai", "gpt-4o", ["business_logic", "user_needs"])
-        )
-        council.add_member(
-            CouncilMember(
-                "security",
-                "anthropic",
-                "claude-3-5-sonnet-20241022",
-                ["threat_modeling", "compliance"],
+        for member_config in DEFAULT_COUNCIL_MEMBERS:
+            council.add_member(
+                CouncilMember(
+                    member_config["role"],
+                    member_config["provider"], 
+                    member_config["model"],
+                    member_config["expertise"]
+                )
             )
-        )
-        council.add_member(
-            CouncilMember(
-                "data_eval", "google", "gemini-1.5-pro", ["analytics", "evaluation"]
-            )
-        )
-        council.add_member(
-            CouncilMember(
-                "infrastructure",
-                "openrouter",
-                "x-ai/grok-2-1212",
-                ["scalability", "architecture"],
-            )
-        )
 
         # Update council member status
         current_pipeline_status.council_members = [
@@ -647,7 +651,7 @@ async def run_audit_with_ui_updates(
 
         await connection_manager.send_update(
             {
-                "type": "council_initialized",
+                "type": WS_MESSAGE_TYPES["COUNCIL_INITIALIZED"],
                 "audit_id": audit_id,
                 "project_id": project_id,
                 "members": [
@@ -662,12 +666,12 @@ async def run_audit_with_ui_updates(
                 continue
             # Enforce optional time budget between documents
             if max_seconds and (time.perf_counter() - start_time) > max_seconds:
-                raise TimeoutError(f"Audit time budget exceeded ({max_seconds}s)")
+                raise TimeoutError(f"{API_MESSAGES['AUDIT_TIME_BUDGET_EXCEEDED']} ({max_seconds}s)")
 
             doc_status.audit_status = "in_progress"
             await connection_manager.send_update(
                 {
-                    "type": "document_audit_started",
+                    "type": WS_MESSAGE_TYPES["DOCUMENT_AUDIT_STARTED"],
                     "audit_id": audit_id,
                     "project_id": project_id,
                     "document": doc_status.model_dump(),
@@ -695,7 +699,7 @@ async def run_audit_with_ui_updates(
 
             await connection_manager.send_update(
                 {
-                    "type": "document_audit_completed",
+                    "type": WS_MESSAGE_TYPES["DOCUMENT_AUDIT_COMPLETED"],
                     "audit_id": audit_id,
                     "project_id": project_id,
                     "document": doc_status.model_dump(),
@@ -713,7 +717,7 @@ async def run_audit_with_ui_updates(
 
         await connection_manager.send_update(
             {
-                "type": "audit_completed",
+                "type": WS_MESSAGE_TYPES["AUDIT_COMPLETED"],
                 "audit_id": audit_id,
                 "project_id": project_id,
                 "status": current_pipeline_status.model_dump(),
@@ -733,7 +737,7 @@ async def run_audit_with_ui_updates(
         current_pipeline_status.overall_status = "failed"
         await connection_manager.send_update(
             {
-                "type": "error",
+                "type": WS_MESSAGE_TYPES["ERROR"],
                 "audit_id": audit_id,
                 "project_id": project_id,
                 "message": str(e),
@@ -751,50 +755,7 @@ async def run_audit_with_ui_updates(
 @app.get("/api/models")
 async def get_models():
     """Return a curated list of supported LLM models with their pricing."""
-
-    # Hardcoded catalog as a fallback and source of truth for our curated list
-    fallback_catalog = {
-        'gpt-4o': { 'provider': 'OpenAI', 'label': 'gpt-4o', 'inPricePer1K': 0.005, 'outPricePer1K': 0.015, 'contextK': 128 },
-        'gpt-4o-mini': { 'provider': 'OpenAI', 'label': 'gpt-4o-mini', 'inPricePer1K': 0.00015, 'outPricePer1K': 0.0006, 'contextK': 128 },
-        'gpt-4-turbo': { 'provider': 'OpenAI', 'label': 'gpt-4-turbo', 'inPricePer1K': 0.01, 'outPricePer1K': 0.03, 'contextK': 128 },
-        'claude-3-5-sonnet': { 'provider': 'Anthropic', 'label': 'claude-3.5-sonnet', 'inPricePer1K': 0.003, 'outPricePer1K': 0.015, 'contextK': 200 },
-        'claude-3-opus': { 'provider': 'Anthropic', 'label': 'claude-3-opus', 'inPricePer1K': 0.015, 'outPricePer1K': 0.075, 'contextK': 200 },
-        'claude-3-haiku': { 'provider': 'Anthropic', 'label': 'claude-3-haiku', 'inPricePer1K': 0.00025, 'outPricePer1K': 0.00125, 'contextK': 200 },
-        'gemini-1.5-pro': { 'provider': 'Google', 'label': 'gemini-1.5-pro', 'inPricePer1K': 0.0035, 'outPricePer1K': 0.0105, 'contextK': 1000 },
-        'gemini-1.5-flash': { 'provider': 'Google', 'label': 'gemini-1.5-flash', 'inPricePer1K': 0.00035, 'outPricePer1K': 0.00053, 'contextK': 1000 },
-        'llama-3.1-70b-instruct': { 'provider': 'Meta', 'label': 'llama-3.1-70b-instruct', 'inPricePer1K': 0.00059, 'outPricePer1K': 0.00279, 'contextK': 128 },
-        'llama-3.1-8b-instruct': { 'provider': 'Meta', 'label': 'llama-3.1-8b-instruct', 'inPricePer1K': 0.0001, 'outPricePer1K': 0.0004, 'contextK': 128 },
-        'mistral-large-2407': { 'provider': 'Mistral', 'label': 'mistral-large-2407', 'inPricePer1K': 0.003, 'outPricePer1K': 0.009, 'contextK': 128 },
-        'command-r-plus': { 'provider': 'Cohere', 'label': 'command-r+', 'inPricePer1K': 0.003, 'outPricePer1K': 0.015, 'contextK': 128 },
-    }
-
-    # This mapping is needed because frontend keys sometimes differ from litellm IDs
-    key_to_litellm_id = {
-        'gemini-1.5-pro': 'gemini/gemini-1.5-pro-latest',
-        'gemini-1.5-flash': 'gemini/gemini-1.5-flash-latest',
-        'llama-3.1-70b-instruct': 'meta-llama/Llama-3.1-70b-instruct',
-        'llama-3.1-8b-instruct': 'meta-llama/Llama-3.1-8b-instruct',
-        'mistral-large-2407': 'mistral/mistral-large-latest',
-    }
-
-    model_catalog = {}
-    for key, fallback_data in fallback_catalog.items():
-        litellm_id = key_to_litellm_id.get(key, key)
-        try:
-            cost = litellm.get_model_cost(litellm_id)
-            info = litellm.get_model_info(litellm_id)
-
-            model_catalog[key] = {
-                'provider': fallback_data['provider'],
-                'label': fallback_data['label'],
-                'inPricePer1K': cost.get('input_cost_per_1k_tokens', fallback_data['inPricePer1K']) if cost else fallback_data['inPricePer1K'],
-                'outPricePer1K': cost.get('output_cost_per_1k_tokens', fallback_data['outPricePer1K']) if cost else fallback_data['outPricePer1K'],
-                'contextK': info.get('max_input_tokens', fallback_data['contextK'] * 1000) / 1000 if info else fallback_data['contextK'],
-            }
-        except Exception:
-            model_catalog[key] = fallback_data
-
-    return ApiResponse(success=True, data={"models": model_catalog})
+    return ModelCatalogService.get_models()
 
 
 @app.get("/api/config/templates")
@@ -844,7 +805,11 @@ if FRONTEND_DIST.exists():
         app.mount("/assets", StaticFiles(directory=str(assets_dir), html=False), name="assets")
 
 
-def run_ui_server(config: UIConfig = UIConfig()):
+def run_ui_server(config: UIConfig = UIConfig(
+    host=DEFAULT_HOST,
+    port=DEFAULT_PORT, 
+    docs_path=DEFAULT_DOCS_PATH
+)):
     """Run the UI server."""
     uvicorn.run(
         "llm_council.ui_server:app",

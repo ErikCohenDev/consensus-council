@@ -6,6 +6,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the **LLM Council Audit & Consensus Platform** - a CLI tool that uses multiple LLM "auditors" (PM, Infrastructure, Data/Eval, Security, UX, Cost) to review and validate project documents through quality gates. The system enforces consensus-based document promotion from Research Brief → Market Scan → Vision → PRD → Architecture → Implementation Plan.
 
+### Logical Application Flow
+
+The platform now includes an integrated **Idea-to-Context Pipeline** for project discovery:
+
+1. **Idea Input** (`IdeaPage`) - Users describe their project idea (10-2000 characters)
+2. **Context Graph Generation** - Extracts entities and relationships from the idea using LLM analysis
+3. **Graph Visualization** (`ContextPage`) - Interactive ReactFlow display of entities and their connections
+4. **Research Expansion** - Enhances the context graph with targeted market research and insights
+
+**Flow Implementation:**
+- `POST /api/ideas/extract-context` - Entity extraction from idea text
+- `POST /api/ideas/expand-research` - Research-based context expansion
+- ReactFlow visualization with entities (problems, solutions, users, risks) and relationships
+- Local storage persistence for seamless navigation between pages
+
 ## Core Architecture
 
 The platform uses a **template-driven orchestration system** with parallel LLM auditor execution:
@@ -16,6 +31,8 @@ The platform uses a **template-driven orchestration system** with parallel LLM a
 - **Consensus Engine**: Trimmed mean algorithm with configurable thresholds
 - **Human Review Interface**: Strategic decisions and deadlock resolution
 - **Gate Evaluator**: Pass/fail decisions based on consensus + blocking issues
+- **Entity Extractor**: LLM-powered extraction of entities and relationships from idea text
+- **Research Expander**: Targeted research integration to enhance context graphs with market insights
 
 ## Development Commands
 
@@ -205,6 +222,9 @@ scripts/
 - **Caching System**: ✅ Hash-based caching implementation (`cache.py`)
 - **Web UI**: ✅ FastAPI backend + React frontend with real-time updates
 - **Council System**: ✅ Multi-model debate and consensus building
+- **Entity Extraction**: ✅ LLM-powered entity and relationship extraction (`entity_extractor.py`)
+- **Research Expansion**: ✅ Context graph enhancement with targeted research (`research_expander.py`)
+- **Idea-to-Context Pipeline**: ✅ Complete flow from idea input to graph visualization
 
 ### 🟡 **REMAINING GAPS:**
 
