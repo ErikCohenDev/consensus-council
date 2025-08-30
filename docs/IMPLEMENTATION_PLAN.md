@@ -83,6 +83,8 @@ tests/                     # tests evolving
 | FE-008   | Error handling, toasts, logging                          | NFR (Reliab) | 0.5d | Todo   |
 | FE-009   | WS/Hook unit + integration tests                         | Quality      | 1d   | Todo   |
 | FE-010   | CI wiring for frontend tests/coverage                    | Quality      | 0.5d | Todo   |
+| FE-011   | Switch API calls to Projects/Runs model                  | API          | 0.5d | Planned|
+| FE-012   | Scope WS by projectId/runId (query params)               | API          | 0.5d | Planned|
 
 ### Backend Tasks (selected)
 
@@ -97,6 +99,9 @@ tests/                     # tests evolving
 | T-BE-010 | Research agent integration                    | R-PRD-010  | 1d   | Planned|
 | T-BE-011 | Human review CLI flow                         | R-PRD-011  | 1d   | Planned|
 | T-BE-012 | Deadlock detection                            | R-PRD-012  | 0.5d | Planned|
+| API-001  | Add Projects/Runs routes (alias audits)        | Interfaces | 0.5d | Planned|
+| API-002  | Add runId to WS and scope by project/run       | Interfaces | 0.5d | Planned|
+| API-003  | Optional project registry (derive id from path)| Interfaces | 1d   | Planned|
 
 ## 3) Quality & Evaluation Gates
 

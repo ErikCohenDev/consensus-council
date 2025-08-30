@@ -30,5 +30,7 @@ Frontend additions (supporting observability, not PRD‑blocking):
 | FE-004 | Zustand app store                           | Store unit tests                         | ⏳      |
 | FE-005 | Pages (Dashboard, Audit, Council, Pipeline) | Smoke/snapshot tests                     | ⏳      |
 | FE-006 | Hook: `useWebSocketConnection`              | Integration test with mocked WS          | ⏳      |
+| FE-011 | Projects/Runs API calls                     | API tests (start run, snapshot)          | ⏳      |
+| FE-012 | WS scoping by projectId/runId               | WS integration tests                      | ⏳      |
 
 Legend: ✅ done • ⏳ planned • ❌ missing

@@ -20,7 +20,9 @@ from dataclasses import dataclass, asdict
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+import uuid
+from statistics import mean
 
 from .orchestrator import AuditorOrchestrator
 from .council_members import Council, CouncilMember, DebateResult
@@ -100,7 +102,7 @@ class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
 
-    async def connect(self, websocket: WebSocket):
+    async def connsect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
 
@@ -137,6 +139,98 @@ current_pipeline_status = PipelineProgress(
 # Prefer serving built Vite frontend if available
 FRONTEND_DIST = (Path(__file__).resolve().parent.parent.parent / "frontend" / "dist")
 
+# Audit tracking (simple in-memory for MVP)
+current_audit_id: Optional[str] = None
+audit_history: List[Dict[str, Any]] = []  # each: {"audit_id", "success", "execution_time", "total_cost"}
+
+class ApiResponse(BaseModel):
+    success: bool = True
+    data: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+    timestamp: float = Field(default_factory=lambda: time.time())
+
+class StartAuditRequest(BaseModel):
+    docsPath: str
+    stage: Optional[str] = None
+    model: Optional[str] = "gpt-4o"
+
+def _pipeline_to_camel(p: PipelineProgress) -> Dict[str, Any]:
+    def dt_to_ts(dt: Optional[datetime]):
+        return int(dt.timestamp()) if isinstance(dt, datetime) else None
+    return {
+        "documents": [
+            {
+                "name": d.name,
+                "stage": d.stage,
+                "exists": d.exists,
+                "wordCount": d.word_count,
+                "lastModified": dt_to_ts(d.last_modified),
+                "auditStatus": d.audit_status,
+                "consensusScore": d.consensus_score,
+                "alignmentIssues": d.alignment_issues,
+            }
+            for d in p.documents
+        ],
+        "councilMembers": [
+            {
+                "role": m.role,
+                "provider": m.model_provider,
+                "model": m.model_name,
+                "currentStatus": m.current_activity,
+                "insightsContributed": m.insights_contributed,
+                "agreementsMade": m.agreements_made,
+                "questionsAsked": m.questions_asked,
+                "expertiseAreas": [],
+                "personality": "balanced",
+                "debateStyle": "collaborative",
+                "memberId": f"{m.role}-{m.model_name}",
+            }
+            for m in p.council_members
+        ],
+        "currentDebateRound": (
+            {
+                "roundNumber": p.current_debate_round.round_number,
+                "participants": p.current_debate_round.participants,
+                "initialReviews": {},
+                "peerResponses": {},
+                "emergingConsensus": p.current_debate_round.consensus_points,
+                "disagreements": p.current_debate_round.disagreements,
+                "questionsRaised": p.current_debate_round.questions_raised,
+                "durationSeconds": p.current_debate_round.duration_seconds,
+                "status": p.current_debate_round.status,
+            }
+            if p.current_debate_round
+            else None
+        ),
+        "researchProgress": [
+            {
+                "stage": r.stage,
+                "queriesExecuted": r.queries_executed,
+                "sourcesFound": r.sources_found,
+                "contextAdded": r.context_added,
+                "durationSeconds": r.duration_seconds,
+                "status": r.status,
+            }
+            for r in p.research_progress
+        ],
+        "totalCostUsd": p.total_cost_usd,
+        "executionTime": p.execution_time,
+        "overallStatus": p.overall_status,
+    }
+
+def _metrics_summary() -> Dict[str, Any]:
+    if not audit_history:
+        return {"totalAudits": 0, "totalCost": 0.0, "avgDuration": 0.0, "successRate": 0.0}
+    total_cost = sum(item.get("total_cost", 0.0) for item in audit_history)
+    durations = [item.get("execution_time", 0.0) for item in audit_history if item.get("execution_time")]
+    successes = sum(1 for item in audit_history if item.get("success"))
+    return {
+        "totalAudits": len(audit_history),
+        "totalCost": total_cost,
+        "avgDuration": (mean(durations) if durations else 0.0),
+        "successRate": (successes / len(audit_history)) if audit_history else 0.0,
+    }
+
 
 @app.get("/")
 async def index():
@@ -171,42 +265,58 @@ async def index():
     )
 
 
-@app.get("/api/status")
-async def get_status():
-    """Get current pipeline status."""
-    return current_pipeline_status
+@app.get("/api/healthz")
+async def healthz():
+    return {"ok": True, "timestamp": time.time()}
 
 
-@app.post("/api/start_audit")
-async def start_audit(docs_path: str, stage: Optional[str] = None, model: str = "gpt-4o"):
-    """Start an audit process."""
+@app.get("/api/audits/{audit_id}")
+async def get_audit(audit_id: str):
+    if current_audit_id != audit_id:
+        # For MVP: if ID doesn't match, return latest snapshot with a note
+        return ApiResponse(
+            success=True,
+            data={
+                "pipeline": _pipeline_to_camel(current_pipeline_status),
+                "metrics": _metrics_summary(),
+                "note": "Requested audit not active; returning current snapshot.",
+            },
+        )
+    return ApiResponse(success=True, data={"pipeline": _pipeline_to_camel(current_pipeline_status), "metrics": _metrics_summary()})
+
+
+@app.post("/api/audits")
+async def create_audit(req: StartAuditRequest):
+    """Create a new audit run."""
+    global current_audit_id
     try:
+        current_audit_id = uuid.uuid4().hex
         # Update status
         current_pipeline_status.overall_status = "initializing"
         await connection_manager.send_update({
             "type": "status_update",
-            "status": asdict(current_pipeline_status)
+            "audit_id": current_audit_id,
+            "status": asdict(current_pipeline_status),
         })
-
         # Initialize audit command
         audit_cmd = AuditCommand(
-            docs_path=Path(docs_path),
-            stage=stage,
-            model=model
+            docs_path=Path(req.docsPath),
+            stage=req.stage,
+            model=req.model or "gpt-4o",
         )
-
         # Start audit in background
-        asyncio.create_task(run_audit_with_ui_updates(audit_cmd))
-
-        return {"message": "Audit started", "status": "initializing"}
-
+        asyncio.create_task(run_audit_with_ui_updates(audit_cmd, current_audit_id))
+        return ApiResponse(success=True, data={"auditId": current_audit_id, "startedAt": time.time()})
     except Exception as e:
         current_pipeline_status.overall_status = "failed"
-        await connection_manager.send_update({
-            "type": "error",
-            "message": str(e)
-        })
+        await connection_manager.send_update({"type": "error", "message": str(e), "audit_id": current_audit_id})
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Back-compat for older clients
+@app.post("/api/start_audit")
+async def start_audit_legacy(docs_path: str, stage: Optional[str] = None, model: str = "gpt-4o"):
+    return await create_audit(StartAuditRequest(docsPath=docs_path, stage=stage, model=model))
 
 
 @app.websocket("/ws")
@@ -217,6 +327,7 @@ async def websocket_endpoint(websocket: WebSocket):
         # Send initial status
         await websocket.send_text(json.dumps({
             "type": "status_update",
+            "audit_id": current_audit_id,
             "status": asdict(current_pipeline_status)
         }))
 
@@ -227,7 +338,7 @@ async def websocket_endpoint(websocket: WebSocket):
         connection_manager.disconnect(websocket)
 
 
-async def run_audit_with_ui_updates(audit_cmd: AuditCommand):
+async def run_audit_with_ui_updates(audit_cmd: AuditCommand, audit_id: str):
     """Run audit with real-time UI updates."""
     start_time = time.perf_counter()
 
@@ -257,6 +368,7 @@ async def run_audit_with_ui_updates(audit_cmd: AuditCommand):
         current_pipeline_status.overall_status = "running"
         await connection_manager.send_update({
             "type": "status_update",
+            "audit_id": audit_id,
             "status": asdict(current_pipeline_status)
         })
 
@@ -282,6 +394,7 @@ async def run_audit_with_ui_updates(audit_cmd: AuditCommand):
 
         await connection_manager.send_update({
             "type": "council_initialized",
+            "audit_id": audit_id,
             "members": [asdict(member) for member in current_pipeline_status.council_members]
         })
 
@@ -293,6 +406,7 @@ async def run_audit_with_ui_updates(audit_cmd: AuditCommand):
             doc_status.audit_status = "in_progress"
             await connection_manager.send_update({
                 "type": "document_audit_started",
+                "audit_id": audit_id,
                 "document": asdict(doc_status)
             })
 
@@ -306,6 +420,7 @@ async def run_audit_with_ui_updates(audit_cmd: AuditCommand):
 
             await connection_manager.send_update({
                 "type": "document_audit_completed",
+                "audit_id": audit_id,
                 "document": asdict(doc_status),
                 "debate_result": {
                     "consensus_score": debate_result.consensus_score,
@@ -320,15 +435,56 @@ async def run_audit_with_ui_updates(audit_cmd: AuditCommand):
 
         await connection_manager.send_update({
             "type": "audit_completed",
+            "audit_id": audit_id,
             "status": asdict(current_pipeline_status)
+        })
+        # Record in history
+        audit_history.append({
+            "audit_id": audit_id,
+            "success": True,
+            "execution_time": current_pipeline_status.execution_time,
+            "total_cost": current_pipeline_status.total_cost_usd,
         })
 
     except Exception as e:
         current_pipeline_status.overall_status = "failed"
         await connection_manager.send_update({
             "type": "error",
+            "audit_id": audit_id,
             "message": str(e)
         })
+        audit_history.append({
+            "audit_id": audit_id,
+            "success": False,
+            "execution_time": time.perf_counter() - start_time,
+            "total_cost": current_pipeline_status.total_cost_usd,
+        })
+
+@app.get("/api/config/templates")
+async def list_templates():
+    """List available template files in config/templates."""
+    templates_dir = Path(__file__).resolve().parent.parent.parent / "config" / "templates"
+    items = []
+    if templates_dir.exists():
+        for f in templates_dir.glob("*.yaml"):
+            if f.name == "registry.yaml":
+                continue
+            items.append({"name": f.stem, "file": str(f), "basename": f.name})
+    return ApiResponse(success=True, data={"templates": items})
+
+@app.get("/api/config/quality-gates")
+async def get_quality_gates():
+    qg = Path(__file__).resolve().parent.parent.parent / "config" / "quality_gates.yaml"
+    if qg.exists():
+        try:
+            import yaml
+            with qg.open("r", encoding="utf-8") as f:
+                raw = yaml.safe_load(f) or {}
+        except Exception:
+            raw = {}
+    else:
+        raw = {}
+    return ApiResponse(success=True, data={"qualityGates": raw})
 
 
 # If Vite build exists, serve its assets at /assets

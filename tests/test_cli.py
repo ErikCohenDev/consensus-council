@@ -11,7 +11,7 @@ from llm_council.cli import cli, AuditCommand
 
 class TestCLICommands:
     """Test CLI command structure and parsing."""
-    
+
     def test_cli_help_output(self):
         """Test that CLI shows help information."""
         runner = CliRunner()
@@ -20,7 +20,7 @@ class TestCLICommands:
         assert result.exit_code == 0
         assert "LLM Council Audit" in result.output
         assert "audit" in result.output
-    
+
     def test_audit_command_help(self):
         """Test audit subcommand help."""
         runner = CliRunner()
@@ -30,7 +30,7 @@ class TestCLICommands:
         assert "--stage" in result.output
         assert "--template" in result.output
         assert "--interactive" in result.output
-    
+
     def test_audit_command_required_docs_path(self):
         """Test that audit command requires docs path."""
         runner = CliRunner()
@@ -42,7 +42,7 @@ class TestCLICommands:
 
 class TestAuditCommand:
     """Test audit command functionality."""
-    
+
     def test_audit_command_initialization(self, temp_dir, sample_template_config, sample_quality_gates):
         """Test audit command initialization."""
         # Create necessary files
@@ -73,7 +73,7 @@ class TestAuditCommand:
         assert command.docs_path == docs_dir
         assert command.stage == "vision"
         assert command.model == "gpt-4o"
-    
+
     def test_audit_command_document_loading(self, temp_dir, sample_template_config, sample_quality_gates):
         """Test loading documents from docs directory."""
         # Setup
@@ -107,7 +107,7 @@ class TestAuditCommand:
         assert "prd" in documents
         assert "This is the vision content" in documents["vision"]
         assert "This is the PRD content" in documents["prd"]
-    
+
     def test_audit_command_missing_documents(self, temp_dir, sample_template_config, sample_quality_gates):
         """Test handling of missing documents."""
         # Setup without documents
@@ -133,7 +133,7 @@ class TestAuditCommand:
 
         # Should handle missing documents gracefully
         assert isinstance(documents, dict)
-    
+
     @patch('llm_council.cli.AuditorOrchestrator')
     def test_audit_single_stage_execution(self, mock_orchestrator, temp_dir, sample_template_config, sample_quality_gates):
         """Test single stage audit execution."""
@@ -190,7 +190,7 @@ class TestAuditCommand:
         # For testing purposes, we'll test the components
         documents = command.load_documents()
         assert "vision" in documents
-    
+
     def test_audit_command_output_generation(self, temp_dir, sample_template_config, sample_quality_gates):
         """Test generation of audit output files."""
         # Setup
@@ -259,14 +259,14 @@ class TestAuditCommand:
 
 class TestCLIIntegration:
     """Test CLI integration with real components."""
-    
+
     @patch('llm_council.cli.AuditorOrchestrator')
     def test_full_audit_command_integration(self, mock_orchestrator, temp_dir):
         """Test full audit command integration."""
         runner = CliRunner()
 
         # Setup test environment
-        docs_dir = temp_dir / "docs"  
+        docs_dir = temp_dir / "docs"
         docs_dir.mkdir()
 
         # Create sample template
@@ -362,7 +362,7 @@ class TestCLIIntegration:
 
         assert result.exit_code == 0
         assert "AUDIT SUMMARY" in result.output or "audit" in result.output.lower()
-    
+
     def test_cli_missing_api_key(self, temp_dir):
         """Test CLI behavior when API key is missing."""
         runner = CliRunner()
@@ -373,14 +373,14 @@ class TestCLIIntegration:
         # Clear environment variable
         with patch.dict('os.environ', {}, clear=True):
             result = runner.invoke(cli, [
-                'audit', 
+                'audit',
                 str(docs_dir),
                 '--stage', 'vision'
             ])
 
         # Should either exit with error or prompt for API key
         assert result.exit_code != 0 or "API key" in result.output or "OPENAI_API_KEY" in result.output
-    
+
     def test_cli_invalid_docs_path(self):
         """Test CLI with invalid docs path."""
         runner = CliRunner()
@@ -392,7 +392,7 @@ class TestCLIIntegration:
         ])
 
         assert result.exit_code != 0
-    
+
     def test_cli_cost_tracking_output(self, temp_dir):
         """Test that CLI shows cost and token information."""
         # This would be part of the output format
@@ -433,9 +433,9 @@ class TestCLIIntegration:
         summary = command.generate_execution_summary(result)
 
         assert "Execution Time: 2.5" in summary
-        assert "Total Tokens: 1,500" in summary  
+        assert "Total Tokens: 1,500" in summary
         assert "Total Cost: $0.07" in summary
-    
+
     @patch('llm_council.cli.AuditorOrchestrator')
     def test_file_output_standardization(self, mock_orchestrator, temp_dir):
         """Test that audit command creates standardized output files."""
@@ -535,7 +535,7 @@ class TestCLIIntegration:
 
 class TestResearchAgentIntegration:
     """Test research agent integration for internet context gathering."""
-    
+
     @patch('llm_council.cli.AuditorOrchestrator')
     @patch('llm_council.cli.ResearchAgent')  # Will implement this
     def test_research_agent_vision_enhancement(self, mock_agent, mock_orchestrator, temp_dir):
@@ -568,7 +568,7 @@ class TestResearchAgentIntegration:
         Target market: software development teams needing faster review cycles.
         """)
 
-        # Mock research agent response  
+        # Mock research agent response
         mock_agent_instance = Mock()
         mock_agent.return_value = mock_agent_instance
 
@@ -641,9 +641,9 @@ class TestResearchAgentIntegration:
         if call_args:
             enhanced_content = call_args[0][1]  # document_content argument
             print("Enhanced content:", repr(enhanced_content))
-    
+
                 # Should contain original content plus research context
             assert "AI-powered document review platform" in enhanced_content
-            assert ("AI development tools growing 45% YoY" in enhanced_content or 
+            assert ("AI development tools growing 45% YoY" in enhanced_content or
                    "GitHub Copilot" in enhanced_content or
                    "Research Context" in enhanced_content)

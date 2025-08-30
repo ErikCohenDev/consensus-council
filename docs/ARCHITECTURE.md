@@ -75,6 +75,14 @@ Note: The legacy inline React page (`/static/ui.js`) has been removed. The FastA
 - Human Review Interface: Interactive prompts with cross-model disagreement analysis and perspective synthesis
 - Exit codes: 0 success, 1 gate fail, 2 human review required, 3 model ensemble failure
 
+### HTTP API Resources (preferred)
+
+- Projects: `/api/projects` (register; path-derived or persisted)  
+- Runs: `/api/projects/{projectId}/runs` (start a pipeline run), `/api/projects/{projectId}/runs/{runId}` (snapshot), `/api/projects/{projectId}/runs/latest`  
+- Config: `/api/templates`, `/api/quality-gates`  
+- Health: `/api/healthz`  
+Legacy aliases remain temporarily: `/api/audits`, `/api/audits/{auditId}`.
+
 ## 4) Scaling & Performance
 
 - Parallel auditor calls (configurable N).

@@ -9,19 +9,19 @@ from llm_council.alignment import AlignmentValidator, AlignmentResult, DocumentD
 
 class TestDocumentDependency:
     """Test document dependency definitions."""
-    
+
     def test_document_dependency_creation(self):
         """Test creating document dependencies."""
         dep = DocumentDependency(
             source_stage="vision",
-            target_stage="prd", 
+            target_stage="prd",
             relationship="defines_requirements_for"
         )
 
         assert dep.source_stage == "vision"
         assert dep.target_stage == "prd"
         assert dep.relationship == "defines_requirements_for"
-    
+
     def test_dependency_chain_creation(self):
         """Test creating dependency chains."""
         deps = [
@@ -39,7 +39,7 @@ class TestDocumentDependency:
 
 class TestAlignmentResult:
     """Test alignment validation results."""
-    
+
     def test_alignment_result_creation(self):
         """Test creating alignment results."""
         result = AlignmentResult(
@@ -57,7 +57,7 @@ class TestAlignmentResult:
         assert result.is_aligned
         assert len(result.misalignments) == 0
         assert len(result.suggestions) == 1
-    
+
     def test_alignment_result_with_misalignments(self):
         """Test alignment result with detected misalignments."""
         misalignments = [
@@ -82,7 +82,7 @@ class TestAlignmentResult:
 
 class TestAlignmentValidator:
     """Test alignment validation logic."""
-    
+
     def test_validator_initialization(self):
         """Test validator initialization."""
         validator = AlignmentValidator()
@@ -90,7 +90,7 @@ class TestAlignmentValidator:
         assert validator is not None
         assert hasattr(validator, 'validate_alignment')
         assert hasattr(validator, 'generate_backlog_file')
-    
+
     def test_validate_alignment_basic(self):
         """Test basic alignment validation between two documents."""
         validator = AlignmentValidator()
@@ -100,7 +100,7 @@ class TestAlignmentValidator:
         Target users are founders and PMs who need fast feedback.
         """
 
-        prd_content = """# PRD  
+        prd_content = """# PRD
         ## Requirements
         R-001: CLI interface for document auditing
         R-002: Cost constraint of ≤$2 per audit run
@@ -115,7 +115,7 @@ class TestAlignmentValidator:
         assert result.alignment_score >= 3.0  # Should be well aligned
         assert result.is_aligned
         assert len(result.misalignments) == 0
-    
+
     def test_validate_alignment_with_conflicts(self):
         """Test alignment validation detecting conflicts."""
         validator = AlignmentValidator()
@@ -127,7 +127,7 @@ class TestAlignmentValidator:
         """
 
         prd_content = """# PRD
-        ## Requirements  
+        ## Requirements
         R-001: Web application with dashboard
         R-002: No cost constraints specified
         R-003: Real-time collaboration features required
@@ -140,7 +140,7 @@ class TestAlignmentValidator:
         assert result.alignment_score < 3.5  # Should detect conflicts
         assert len(result.misalignments) > 0
         assert len(result.suggestions) > 0
-    
+
     def test_validate_missing_upstream_document(self):
         """Test validation when upstream document is missing."""
         validator = AlignmentValidator()
@@ -150,7 +150,7 @@ class TestAlignmentValidator:
         assert isinstance(result, AlignmentResult)
         assert not result.is_aligned
         assert "missing" in str(result.misalignments[0]).lower()
-    
+
     def test_validate_empty_target_document(self):
         """Test validation when target document is empty."""
         validator = AlignmentValidator()
@@ -160,7 +160,7 @@ class TestAlignmentValidator:
         assert isinstance(result, AlignmentResult)
         assert not result.is_aligned
         assert len(result.misalignments) > 0
-    
+
     def test_generate_backlog_file(self):
         """Test backlog file generation for misalignments."""
         validator = AlignmentValidator()
@@ -177,7 +177,7 @@ class TestAlignmentValidator:
 
         result = AlignmentResult(
             source_stage="vision",
-            target_stage="prd", 
+            target_stage="prd",
             alignment_score=2.5,
             is_aligned=False,
             misalignments=misalignments,
@@ -193,7 +193,7 @@ class TestAlignmentValidator:
         assert "web vs CLI" in backlog_content
         assert "cost constraints" in backlog_content
         assert len(backlog_content) > 100  # Should be substantial content
-    
+
     def test_get_document_dependencies(self):
         """Test getting dependencies for document stages."""
         validator = AlignmentValidator()
@@ -204,13 +204,13 @@ class TestAlignmentValidator:
         assert any(dep.source_stage == "market_scan" for dep in deps)
 
         # PRD should depend on vision
-        deps = validator.get_document_dependencies("prd") 
+        deps = validator.get_document_dependencies("prd")
         assert any(dep.source_stage == "vision" for dep in deps)
 
         # Implementation plan should depend on architecture
         deps = validator.get_document_dependencies("implementation_plan")
         assert any(dep.source_stage == "architecture" for dep in deps)
-    
+
     def test_validate_full_document_chain(self):
         """Test validating alignment across full document chain."""
         validator = AlignmentValidator()
@@ -235,7 +235,7 @@ class TestAlignmentValidator:
 
         for expected in expected_pairs:
             assert expected in stage_pairs
-    
+
     def test_validate_missing_research_brief(self):
         """Test validation when research brief is missing."""
         validator = AlignmentValidator()
@@ -252,7 +252,7 @@ class TestAlignmentValidator:
         assert not research_to_market.is_aligned
         assert "missing" in research_to_market.misalignments[0].lower()
         assert "research_brief" in research_to_market.misalignments[0]
-    
+
     def test_validate_research_brief_content_requirements(self):
         """Test that research brief validates required content for market scan."""
         validator = AlignmentValidator()
@@ -280,10 +280,10 @@ class TestAlignmentValidator:
         # Should pass basic validation since both docs exist
         assert result1.is_aligned
 
-        # Test complete research brief 
+        # Test complete research brief
         result2 = validator.validate_alignment("research_brief", "market_scan", complete_research, market_content)
         assert result2.is_aligned
-    
+
     def test_validate_prd_mvp_versioning(self):
         """Test that PRD includes clear MVP delivery checkpoints."""
         validator = AlignmentValidator()
@@ -309,11 +309,11 @@ class TestAlignmentValidator:
         - Single auditor execution with JSON output
         - Simple pass/fail decision
 
-        ### M2: Multi-LLM Council (Week 3-4)  
+        ### M2: Multi-LLM Council (Week 3-4)
         - Parallel execution of 6 specialized auditors
         - Consensus engine with trimmed mean algorithm
         - Human review interface for disagreements
-
+s
         ### M3: Document Pipeline (Week 5-6)
         - Full Vision → PRD → Architecture workflow
         - Cross-document alignment validation

@@ -37,11 +37,11 @@ Owner: QA/Eng • Status: Draft
 
 Frontend (planned):
 
-- FE-WS-001 Normalize backend WS events → unit test for `normalizeToNotification` (status_update, audit_started/completed, error).
+- FE-WS-001 Normalize backend WS events → unit test for `normalizeToNotification` (status_update, audit_started/completed, error). Include `runId` propagation.
 - FE-WS-002 Reconnect with backoff + heartbeat → unit test with mocked WebSocket.
 - FE-WS-003 Hook updates store on events → integration test for `useWebSocketConnection`.
 - FE-UI-001 Pages render from store without WS → snapshot/smoke tests (Dashboard/Council/Audit).
 
 ## Traceability
 
-See `docs/TRACEABILITY_MATRIX.md` for PRD ↔ Architecture ↔ Tests ↔ Tasks mapping.
+See `docs/TRACEABILITY_MATRIX.md` for PRD ↔ Architecture ↔ Tests ↔ Tasks mapping. API tests should cover Projects/Runs routes and legacy `/api/audits*` aliases during migration.

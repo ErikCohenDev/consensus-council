@@ -141,18 +141,21 @@ Changes planned:
 Re-audit scheduled with updated document.
 ```
 
-## CLI Implementation
+## CLI Usage
 
 ```bash
-# Interactive mode (default for strategic docs)
+# Enable interactive human review (recommended for strategic docs)
 python audit.py ./docs --stage vision --interactive
 
-# Force automated mode (skip human review)
-python audit.py ./docs --stage vision --auto-approve
+# With research context (Vision):
+python audit.py ./docs --stage vision --interactive --research-context
 
-# Show what would trigger human review without running
-python audit.py ./docs --stage vision --dry-run --show-triggers
+# Council debate mode (multi-round):
+python audit.py ./docs --stage prd --council-debate
 ```
+
+Notes:
+- `--auto-approve`, `--dry-run`, and `--show-triggers` are planned flags (not yet implemented).
 
 ## Integration Points
 

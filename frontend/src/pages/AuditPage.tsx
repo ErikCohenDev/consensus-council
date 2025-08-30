@@ -10,9 +10,12 @@ export const AuditPage = () => {
     setStarting(true)
     setError(null)
     try {
-      // Simple trigger using dev proxy to backend
-      const params = new URLSearchParams({ docs_path: './docs' })
-      const res = await fetch(`/api/start_audit?${params.toString()}`, { method: 'POST' })
+      // Create audit via RESTful API
+      const res = await fetch('/api/audits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ docsPath: './docs', stage: undefined, model: 'gpt-4o' }),
+      })
       if (!res.ok) throw new Error(`Failed to start audit (${res.status})`)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -42,4 +45,3 @@ export const AuditPage = () => {
     </div>
   )
 }
-

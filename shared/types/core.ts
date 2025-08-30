@@ -1,6 +1,6 @@
 /**
  * Core type definitions shared between backend and frontend
- * 
+ *
  * These types ensure end-to-end type safety across the entire system.
  * All API contracts, data models, and business logic types are defined here.
  */
@@ -332,5 +332,5 @@ export namespace LLMCouncil {
     NetworkError,
     PerformanceMetrics,
     SystemHealth
-  };
+  }
 }

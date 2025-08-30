@@ -106,3 +106,8 @@ Note: A minimal Web UI for real-time visualization is provided for developer erg
 - [ ] NFRs include explicit SLOs + security notes.
 - [ ] Eval plan set; thresholds defined.
 - [ ] 0 **CRITICAL**, ≤3 **HIGH** open issues.
+### API Resource Model (Projects & Runs)
+
+- Provide project-centric endpoints and run snapshots for automation and UI:  
+  `POST /api/projects/{projectId}/runs`, `GET /api/projects/{projectId}/runs/{runId}`  
+  Legacy aliases (`/api/audits*`) remain during migration.

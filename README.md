@@ -20,6 +20,7 @@ From idea → plan → implementation.
 - **[IMPLEMENTATION_PLAN.md](./docs/IMPLEMENTATION_PLAN.md)** — Task breakdown with `T-###`, TDD-ready, owners/estimates, traceability back to PRD
 - **[AUDITOR_SCHEMA.md](./docs/AUDITOR_SCHEMA.md)** — LLM council structure, rubric, consensus algorithm, quality gates
 - **[HUMAN_REVIEW_INTERFACE.md](./docs/HUMAN_REVIEW_INTERFACE.md)** — Human-in-the-loop design for strategic decisions and consensus deadlocks
+ - **[GLOSSARY.md](./docs/GLOSSARY.md)** — Shared terminology, data model, and flow diagram
 
 ## 🚪 Quality Gates
 
@@ -60,17 +61,22 @@ Each document must pass consensus from our LLM council (PM, Infrastructure, Data
    # Or run interactively: python scripts/init_docs.py
    ```
 
-4. **Run the LLM council audit (when implemented):**
+4. **Run the LLM council audit:**
 
    ```bash
-   # Interactive mode (human review for strategic docs)
+   # Required: choose a stage to audit (e.g., vision, prd, architecture)
    python audit.py ./docs --stage vision --interactive
 
-   # Auto mode (skip human review, fail on disagreement)
-   python audit.py ./docs --stage architecture --auto-approve
+   # Enable research context (Vision stage):
+   python audit.py ./docs --stage vision --interactive --research-context
 
-   # Full pipeline with human checkpoints
-   python audit.py ./docs --full-pipeline --interactive
+   # Enable council debate mode (multi-round discussion between roles):
+   python audit.py ./docs --stage prd --council-debate
+
+   # Use a specific template and model:
+   python audit.py ./docs --stage architecture \
+     --template config/templates/software_mvp.yaml \
+     --model gpt-4o
    ```
 
 > Keep each file brief. If a section is not applicable, write **N/A (why)** rather than leaving it blank.
@@ -90,6 +96,32 @@ Two ways to run the UI:
   - The server serves `frontend/dist` automatically at `/` and assets at `/assets`.
 
 If `frontend/dist` is missing, the server shows a short message with setup instructions at `/`.
+
+## 🔌 HTTP API (Projects & Runs)
+
+- Start a run (preferred resource model):
+
+  curl -X POST http://localhost:8000/api/projects/my-project/runs \
+    -H 'Content-Type: application/json' \
+    -d '{"stage":"vision","model":"gpt-4o"}'
+
+  Response:
+  { "success": true, "data": { "runId": "...", "startedAt": 172495... }, "timestamp": ... }
+
+- Get run snapshot:
+
+  curl http://localhost:8000/api/projects/my-project/runs/<runId>
+
+  Response data matches shared schema (camelCase):
+  { "pipeline": { "documents": [...], "overallStatus": "running", ... }, "metrics": { ... } }
+
+- Legacy aliases (still supported during migration):
+  - `POST /api/audits` (body includes `docsPath`)
+  - `GET /api/audits/{auditId}`
+
+- Config:
+  - `GET /api/templates` → list available templates
+  - `GET /api/quality-gates` → returns `config/quality_gates.yaml` (if present)
 
 ## ✅ Testing & Coverage
 
