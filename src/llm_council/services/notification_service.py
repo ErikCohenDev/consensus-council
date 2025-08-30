@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import logging
 from typing import Dict, List, Optional, Any, Set
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 
@@ -67,8 +67,8 @@ class WebSocketConnection:
         except WebSocketDisconnect:
             self.is_active = False
             return False
-        except Exception as e:
-            logger.error(f"Failed to send message to {self.client_id}: {e}")
+        except (ConnectionError, OSError, ValueError) as e:
+            logger.error("Failed to send message to %s: %s", self.client_id, e)
             self.is_active = False
             return False
 
@@ -94,8 +94,9 @@ class NotificationService(INotificationService):
         self._message_history: List[NotificationMessage] = []
         self._max_history_size = 100
 
-        # Subscribe to relevant events
-        self._setup_event_subscriptions()
+        # Note: _setup_event_subscriptions() is async but called from __init__
+        # In practice, this would be handled during service startup
+        # self._setup_event_subscriptions()
 
         logger.info("NotificationService initialized")
 
@@ -138,7 +139,7 @@ class NotificationService(INotificationService):
         # Send recent message history to new client
         await self._send_history_to_client(connection)
 
-        logger.info(f"Client {client_id} connected ({len(self._connections)} total)")
+        logger.info("Client %s connected (%d total)", client_id, len(self._connections))
 
         # Send welcome message
         welcome_message = NotificationMessage(
@@ -154,7 +155,7 @@ class NotificationService(INotificationService):
         """Disconnect a WebSocket client."""
         if client_id in self._connections:
             del self._connections[client_id]
-            logger.info(f"Client {client_id} disconnected ({len(self._connections)} remaining)")
+            logger.info("Client %s disconnected (%d remaining)", client_id, len(self._connections))
 
     async def notify_status_change(self, event_type: str, data: Dict[str, Any]) -> None:
         """Send status change notification to all clients."""
@@ -252,7 +253,7 @@ class NotificationService(INotificationService):
             self.disconnect_client(client_id)
 
         if disconnected_clients:
-            logger.info(f"Cleaned up {len(disconnected_clients)} disconnected clients")
+            logger.info("Cleaned up %d disconnected clients", len(disconnected_clients))
 
     async def _send_history_to_client(self, connection: WebSocketConnection) -> None:
         """Send recent message history to a newly connected client."""
@@ -272,7 +273,7 @@ class NotificationService(INotificationService):
         for event_type in event_types:
             connection.subscribe_to(event_type)
 
-        logger.debug(f"Client {client_id} subscribed to {event_types}")
+        logger.debug("Client %s subscribed to %s", client_id, event_types)
         return True
 
     async def unsubscribe_client(self, client_id: str, event_types: List[str]) -> bool:
@@ -284,7 +285,7 @@ class NotificationService(INotificationService):
         for event_type in event_types:
             connection.unsubscribe_from(event_type)
 
-        logger.debug(f"Client {client_id} unsubscribed from {event_types}")
+        logger.debug("Client %s unsubscribed from %s", client_id, event_types)
         return True
 
     def get_connected_clients(self) -> List[Dict[str, Any]]:

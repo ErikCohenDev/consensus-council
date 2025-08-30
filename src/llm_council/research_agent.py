@@ -7,10 +7,18 @@ inform document auditing with real-world context.
 from __future__ import annotations
 
 import os
+import logging
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Any
 from abc import ABC, abstractmethod
-from tavily import TavilyClient
+
+# Optional import for tavily - will be imported dynamically when needed
+try:
+    from tavily import TavilyClient
+except ImportError:
+    TavilyClient = None
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -30,7 +38,7 @@ class SearchProvider(ABC):
     @abstractmethod
     async def search(self, query: str, max_results: int = 5) -> Dict[str, Any]:
         """Execute search and return structured results."""
-        pass
+        raise NotImplementedError("Subclasses must implement search method")
 
 
 class TavilyProvider(SearchProvider):
@@ -43,75 +51,38 @@ class TavilyProvider(SearchProvider):
             raise ValueError("TAVILY_API_KEY required")
 
     async def search(self, query: str, max_results: int = 5) -> Dict[str, Any]:
-        """Search using Tavily API optimized for LLM context."""
+        """Search using Tavily API with fallback to mock data."""
         try:
+            if TavilyClient is None:
+                raise ImportError("Tavily not available")
+            
             client = TavilyClient(api_key=self.api_key)
-
-            # Use Tavily's search optimized for LLM context
             response = client.search(
                 query=query,
-                search_depth="advanced",  # More comprehensive results
                 max_results=max_results,
-                include_answer=True,      # Get AI-generated summary
-                include_raw_content=True  # Get full content for analysis
+                include_domains=None,
+                exclude_domains=None
             )
-
+            return response
+            
+        except (ImportError, ValueError, KeyError, ConnectionError):
+            logger.warning("Tavily search failed, using fallback mock data")
+            # Return mock data in the expected format
             return {
-                "results": response.get("results", []),
-                "answer": response.get("answer", ""),
-                "query": query,
-                "total_results": len(response.get("results", []))
-            }
-
-        except ImportError:
-            # Fallback to mock for testing environments without tavily-python
-            return {
-                "results": [
+                'results': [
                     {
-                        "title": "AI Development Tools Market Growth 2024",
-                        "content": "AI development tools market growing 45% YoY with enterprise adoption accelerating",
-                        "url": "https://example.com/market-analysis",
-                        "score": 0.95
+                        'title': f'Mock Market Research: {query}',
+                        'content': f'Mock market intelligence data for query: {query}. This includes competitive analysis, market trends, and relevant industry insights.',
+                        'url': 'https://example.com/mock-research',
+                        'score': 0.8
                     },
                     {
-                        "title": "Competitive Analysis: GitHub Copilot vs Alternatives",
-                        "content": "GitHub Copilot leads market but gaps exist in multi-perspective analysis",
-                        "url": "https://example.com/competitors",
-                        "score": 0.88
+                        'title': f'Industry Analysis: {query}',
+                        'content': f'Comprehensive industry analysis covering market size, growth trends, and key players related to: {query}.',
+                        'url': 'https://example.com/industry-analysis',
+                        'score': 0.7
                     }
-                ],
-                "answer": f"Based on research, {query} shows significant market opportunity.",
-                "query": query,
-                "total_results": max_results
-            }
-        except Exception as e:
-            # Graceful fallback for API failures - provide mock data for testing
-            if "Unauthorized" in str(e) or "API key" in str(e):
-                # Return mock data for test scenarios
-                return {
-                    "results": [
-                        {
-                            "title": "AI Development Tools Market Growth 2024",
-                            "content": "AI development tools market growing 45% YoY with enterprise adoption accelerating",
-                            "url": "https://example.com/market-analysis",
-                            "score": 0.95
-                        },
-                        {
-                            "title": "Competitive Analysis: GitHub Copilot vs Alternatives",
-                            "content": "GitHub Copilot leads market but gaps exist in multi-perspective analysis",
-                            "url": "https://example.com/competitors",
-                            "score": 0.88
-                        }
-                    ],
-                    "answer": f"Based on research, {query} shows significant market opportunity.",
-                    "query": query,
-                    "total_results": max_results
-                }
-            return {
-                "results": [],
-                "answer": f"Research unavailable: {str(e)}",
-                "query": query,
-                "total_results": 0
+                ]
             }
 
 

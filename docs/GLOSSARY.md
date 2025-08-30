@@ -55,6 +55,7 @@ Purpose: Shared terminology and data model for the council, audit pipeline, UI e
   shared/types/core.ts:226, shared/types/core.ts:233, shared/types/core.ts:243
 
 Message flow:
+
 - Backend audits and debates emit updates → WS `/ws` broadcasts NotificationMessages (now include `audit_id`).
 - Frontend normalizes messages and updates the Zustand store; UI renders PipelineProgress and Council state.
 
@@ -73,9 +74,11 @@ Message flow:
 - GET `/api/healthz` → basic health check
 
 Compatibility:
+
 - Legacy aliases remain during migration: `POST /api/audits`, `GET /api/audits/{auditId}`. Prefer Projects/Runs routes in new clients.
 
 Notes:
+
 - WS messages include `audit_id` to correlate snapshots and events.
 - Pipeline snapshots are serialized to camelCase for UI compatibility.
 
@@ -89,9 +92,9 @@ Notes:
 ## Artifacts & Outputs
 
 - audit.md — Executive summary, top risks, quick wins.
-- consensus_<DOC>.md — Deterministic consensus result per doc.
-- decision_<STAGE>.md — Gate verdict with thresholds.
-- alignment_backlog_<DOC>.md — Proposed edits to resolve misalignment.
+- consensus\_<DOC>.md — Deterministic consensus result per doc.
+- decision\_<STAGE>.md — Gate verdict with thresholds.
+- alignment*backlog*<DOC>.md — Proposed edits to resolve misalignment.
 
 ## Errors & Metrics (Observability)
 
@@ -102,12 +105,12 @@ Notes:
 
 ## Relationships (at a glance)
 
-1) Document (by Stage) → Audit → AuditorResponses → ConsensusResult
-2) Stages chained by Alignment → Decision artifacts per stage
-3) Council & Debate drive consensus (multi‑round)
-4) PipelineProgress aggregates (1)–(3) for UI
-5) WS events stream state; API snapshots serve UI/automation
-6) Templates + Quality Gates define behavior; Human Review can override/escalate
+1. Document (by Stage) → Audit → AuditorResponses → ConsensusResult
+2. Stages chained by Alignment → Decision artifacts per stage
+3. Council & Debate drive consensus (multi‑round)
+4. PipelineProgress aggregates (1)–(3) for UI
+5. WS events stream state; API snapshots serve UI/automation
+6. Templates + Quality Gates define behavior; Human Review can override/escalate
 
 ## Diagram (Flow Overview)
 
@@ -160,5 +163,6 @@ flowchart LR
 ```
 
 Legend:
+
 - WS events carry `runId` (and may include `audit_id` during migration) and types like `status_update`, `document_audit_started/completed`, `audit_completed`, `error_occurred`.
 - Snapshots (`GET /api/projects/{projectId}/runs/{runId}`) return `pipeline` (camelCase) and `metrics`.

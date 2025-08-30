@@ -68,14 +68,14 @@ class AuditService:
         self._max_parallel = max_parallel
         self._timeout_seconds = timeout_seconds
 
-        logger.info(f"AuditService initialized with {len(auditor_providers)} providers")
+        logger.info("AuditService initialized with %d providers", len(auditor_providers))
 
     async def execute_audit(self, request: AuditRequest) -> AuditResult:
         """Execute audit for the given request."""
         start_time = time.perf_counter()
         request_id = self._generate_request_id(request)
 
-        logger.info(f"Starting audit for stage '{request.stage}' (request_id: {request_id})")
+        logger.info("Starting audit for stage '%s' (request_id: %s)", request.stage, request_id)
 
         try:
             # Publish audit started event
@@ -90,7 +90,7 @@ class AuditService:
             cached_result = await self._cache_service.get(cache_key)
 
             if cached_result:
-                logger.info(f"Cache hit for request {request_id}")
+                logger.info("Cache hit for request %s", request_id)
                 await self._event_publisher.publish("audit_cache_hit", {
                     "request_id": request_id,
                     "cache_key": cache_key
@@ -144,14 +144,14 @@ class AuditService:
                 "cost": result.cost_estimate
             })
 
-            logger.info(f"Audit completed for request {request_id} in {execution_time:.2f}s")
+            logger.info("Audit completed for request %s in %.2fs", request_id, execution_time)
             return result
 
-        except Exception as e:
+        except (ValueError, KeyError, ConnectionError, OSError) as e:
             execution_time = time.perf_counter() - start_time
             error_msg = str(e)
 
-            logger.error(f"Audit failed for request {request_id}: {error_msg}")
+            logger.error("Audit failed for request %s: %s", request_id, error_msg)
 
             # Publish error event
             await self._event_publisher.publish("audit_failed", {
@@ -187,14 +187,14 @@ class AuditService:
                         timeout=self._timeout_seconds
                     )
 
-                    logger.debug(f"Audit completed for provider {provider.provider_name}")
+                    logger.debug("Audit completed for provider %s", provider.provider_name)
                     return response
 
                 except asyncio.TimeoutError:
-                    logger.warning(f"Audit timeout for provider {provider.provider_name}")
+                    logger.warning("Audit timeout for provider %s", provider.provider_name)
                     return None
-                except Exception as e:
-                    logger.error(f"Audit error for provider {provider.provider_name}: {e}")
+                except (ValueError, KeyError, ConnectionError, OSError) as e:
+                    logger.error("Audit error for provider %s: %s", provider.provider_name, e)
                     return None
 
         # Execute all audits in parallel
@@ -207,7 +207,7 @@ class AuditService:
             if isinstance(result, AuditorResponse)
         ]
 
-        logger.info(f"Completed {len(successful_responses)}/{len(self._auditor_providers)} audits")
+        logger.info("Completed %d/%d audits", len(successful_responses), len(self._auditor_providers))
         return successful_responses
 
     def _create_audit_prompt(self, request: AuditRequest, provider: IAuditorProvider) -> str:
@@ -270,7 +270,7 @@ class AuditService:
     async def cancel_audit(self, request_id: str) -> bool:
         """Cancel a running audit request."""
         # Implementation would depend on the specific orchestration mechanism
-        logger.info(f"Cancel requested for audit {request_id}")
+        logger.info("Cancel requested for audit %s", request_id)
         return False  # Not implemented yet
 
     def get_supported_stages(self) -> List[str]:

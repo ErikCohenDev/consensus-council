@@ -3,7 +3,7 @@
 Provides async execution of multiple LLM "auditors" and aggregates their
 responses into an orchestration result (and optional consensus result).
 
-The implementation here is intentionally lightweight – it focuses on the
+The implementation here is intentionally lightweight - it focuses on the
 interfaces expected by the test suite (AuditorWorker, AuditorOrchestrator,
 OrchestrationResult, AuditorExecutionError) and defers advanced behaviors
 like adaptive retry backoff, cost aggregation, streaming, and human review
@@ -54,6 +54,7 @@ class AuditorWorker:
         max_retries: int = 3,
         model: str = "gpt-4o",
         cache: Optional[AuditCache] = None,
+        calls_counter: Optional[Dict[str, int]] = None,
     ):
         self.role = role
         self.stage = stage
@@ -62,6 +63,8 @@ class AuditorWorker:
         self.max_retries = max_retries
         self.model = model
         self.cache = cache
+        # Shared call counter to enforce global caps across workers
+        self.calls_counter = calls_counter
 
     async def execute_audit(self, prompt: str, template_content: str = "", document_content: str = "") -> Dict[str, Any]:
         """Execute the audit prompt and return parsed JSON.
@@ -80,6 +83,16 @@ class AuditorWorker:
         last_err: Optional[Exception] = None
         for attempt in range(1, self.max_retries + 1):
             try:
+                # Enforce optional global call cap before attempting the call
+                if self.calls_counter is not None and "max" in self.calls_counter:
+                    current = int(self.calls_counter.get("count", 0))
+                    if current >= int(self.calls_counter["max"]):
+                        raise AuditorExecutionError(
+                            f"Global call cap exceeded (count={current}, max={self.calls_counter['max']})"
+                        )
+                    # Increment on attempt
+                    self.calls_counter["count"] = current + 1
+
                 response = await asyncio.wait_for(
                     self.client.chat.completions.create(
                         model=self.model,
@@ -108,7 +121,7 @@ class AuditorWorker:
                     self.cache.set(cache_key, data)
 
                 return data
-            except (json.JSONDecodeError, ValueError, asyncio.TimeoutError, Exception) as err:  # noqa: BLE001
+            except (json.JSONDecodeError, ValueError, asyncio.TimeoutError, ConnectionError, OSError) as err:
                 last_err = err
                 if attempt == self.max_retries:
                     break
@@ -133,6 +146,7 @@ class AuditorOrchestrator:
         max_retries: int = 3,
         cache_dir: Optional[Path] = None,
         enable_cache: bool = True,
+        max_calls_total: Optional[int] = None,
     ):
         self.template_path = template_path
         self.model = model
@@ -141,6 +155,7 @@ class AuditorOrchestrator:
         self.timeout_seconds = timeout_seconds
         self.max_retries = max_retries
         self.enable_cache = enable_cache
+        self.max_calls_total = max_calls_total
 
         self._template_engine = TemplateEngine(template_path)
         self._client = AsyncOpenAI(api_key=api_key)
@@ -171,6 +186,11 @@ class AuditorOrchestrator:
         responses: List[Dict[str, Any]] = []
         failed: List[str] = []
 
+        # Initialize shared call counter if cap is set
+        calls_counter: Optional[Dict[str, int]] = None
+        if self.max_calls_total is not None:
+            calls_counter = {"count": 0, "max": int(self.max_calls_total)}
+
         async def run_auditor(role: str):
             prompt = self._template_engine.get_auditor_prompt(
                 stage, role, document_content
@@ -184,6 +204,7 @@ class AuditorOrchestrator:
                 max_retries=self.max_retries,
                 model=self.model,
                 cache=self._cache,
+                calls_counter=calls_counter,
             )
             async with semaphore:
                 try:

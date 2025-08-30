@@ -15,7 +15,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
+from dataclasses import asdict
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -24,11 +24,7 @@ from pydantic import BaseModel, Field
 import uuid
 from statistics import mean
 
-from .orchestrator import AuditorOrchestrator
-from .council_members import Council, CouncilMember, DebateResult
-from .alignment import AlignmentValidator
-from .research_agent import ResearchAgent
-from .pipeline import PipelineOrchestrator
+from .council_members import Council, CouncilMember
 from .observability import setup_tracing, get_tracer
 from .cli import AuditCommand, DOCUMENT_STAGE_MAPPING
 
@@ -170,7 +166,7 @@ class ApiResponse(BaseModel):
     success: bool = True
     data: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
-    timestamp: float = Field(default_factory=lambda: time.time())
+    timestamp: float = Field(default_factory=time.time)
 
 class StartAuditRequest(BaseModel):
     docsPath: Optional[str] = None

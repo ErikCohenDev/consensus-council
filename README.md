@@ -20,7 +20,7 @@ From idea → plan → implementation.
 - **[IMPLEMENTATION_PLAN.md](./docs/IMPLEMENTATION_PLAN.md)** — Task breakdown with `T-###`, TDD-ready, owners/estimates, traceability back to PRD
 - **[AUDITOR_SCHEMA.md](./docs/AUDITOR_SCHEMA.md)** — LLM council structure, rubric, consensus algorithm, quality gates
 - **[HUMAN_REVIEW_INTERFACE.md](./docs/HUMAN_REVIEW_INTERFACE.md)** — Human-in-the-loop design for strategic decisions and consensus deadlocks
- - **[GLOSSARY.md](./docs/GLOSSARY.md)** — Shared terminology, data model, and flow diagram
+- **[GLOSSARY.md](./docs/GLOSSARY.md)** — Shared terminology, data model, and flow diagram
 
 ## 🚪 Quality Gates
 
@@ -87,6 +87,7 @@ Each document must pass consensus from our LLM council (PM, Infrastructure, Data
 Two ways to run the UI:
 
 - Development (recommended):
+
   - Backend: `python -m src.llm_council.ui_server`
   - Frontend: `cd frontend && npm install && npm run dev` (Vite dev server at `http://localhost:3000`, proxying `/api` and `/ws` to `http://localhost:8000`)
 
@@ -102,8 +103,8 @@ If `frontend/dist` is missing, the server shows a short message with setup instr
 - Start a run (preferred resource model):
 
   curl -X POST http://localhost:8000/api/projects/my-project/runs \
-    -H 'Content-Type: application/json' \
-    -d '{"stage":"vision","model":"gpt-4o"}'
+   -H 'Content-Type: application/json' \
+   -d '{"stage":"vision","model":"gpt-4o"}'
 
   Response:
   { "success": true, "data": { "runId": "...", "startedAt": 172495... }, "timestamp": ... }
@@ -116,6 +117,7 @@ If `frontend/dist` is missing, the server shows a short message with setup instr
   { "pipeline": { "documents": [...], "overallStatus": "running", ... }, "metrics": { ... } }
 
 - Legacy aliases (still supported during migration):
+
   - `POST /api/audits` (body includes `docsPath`)
   - `GET /api/audits/{auditId}`
 
@@ -126,6 +128,7 @@ If `frontend/dist` is missing, the server shows a short message with setup instr
 ## ✅ Testing & Coverage
 
 - Backend (pytest):
+
   - `pytest --maxfail=1 --disable-warnings -q`
   - With coverage: `pytest --cov=src/llm_council --cov-report=term-missing`
 

@@ -25,7 +25,7 @@ except ImportError:
 class ProviderType(Enum):
     """Supported LLM provider types."""
     OPENAI = "openai"
-    ANTHROPIC = "anthropic" 
+    ANTHROPIC = "anthropic"
     GOOGLE = "google"
     OPENROUTER = "openrouter"
 
@@ -74,15 +74,15 @@ class PerspectiveDiversityAnalysis:
 
 class UniversalModelProvider:
     """Universal LLM provider using LiteLLM for all major providers."""
-    
+
     def __init__(self, config: ModelConfig):
         self.config = config
         if litellm is None:
             raise ImportError("litellm package required for multi-model support")
-        
+
         # Set up provider-specific API keys in environment for LiteLLM
         self._setup_api_keys()
-    
+
     def _setup_api_keys(self):
         """Configure API keys for LiteLLM based on provider."""
         # LiteLLM expects specific environment variable names
@@ -94,14 +94,14 @@ class UniversalModelProvider:
             os.environ["GOOGLE_API_KEY"] = self.config.api_key
         elif self.config.provider == "openrouter":
             os.environ["OPENROUTER_API_KEY"] = self.config.api_key
-    
+
     async def execute_audit(self, prompt: str) -> Dict[str, Any]:
         """Execute audit using LiteLLM unified interface."""
         # LiteLLM model format: provider/model-name
         model_name = f"{self.config.provider}/{self.config.model}"
         if self.config.provider == "openrouter":
             model_name = self.config.model  # OpenRouter models use full path
-        
+
         try:
             response = await acompletion(
                 model=model_name,
@@ -115,17 +115,17 @@ class UniversalModelProvider:
                 temperature=self.config.temperature,
                 max_tokens=self.config.max_tokens
             )
-            
+
             content = response.choices[0].message.content if response.choices else "{}"
             data = json.loads(content)
-            
+
             # Add model metadata
             data["model_provider"] = self.config.provider
             data["model_name"] = self.config.model
             data["auditor_role"] = self.config.role
-            
+
             return data
-            
+
         except Exception as e:
             # Return error response that matches expected schema
             return {
@@ -145,25 +145,25 @@ class UniversalModelProvider:
 
 class MultiModelOrchestrator:
     """Orchestrates multiple LLM providers for diverse perspective analysis."""
-    
+
     def __init__(self, model_configs: List[ModelConfig]):
         self.model_configs = model_configs
         self._providers = self._initialize_providers()
-    
+
     def _initialize_providers(self) -> Dict[str, UniversalModelProvider]:
         """Initialize universal provider instances using LiteLLM."""
         providers = {}
-        
+
         for config in self.model_configs:
             providers[config.role] = UniversalModelProvider(config)
-        
+
         return providers
-    
+
     async def execute_ensemble_audit(self, stage: str, document_content: str) -> EnsembleResult:
         """Execute audit across all configured models and analyze perspective diversity."""
         import time
         start_time = time.perf_counter()
-        
+
         # Execute all models in parallel
         tasks = []
         for role, provider in self._providers.items():
@@ -173,19 +173,19 @@ class MultiModelOrchestrator:
 {document_content}
 
 Return structured JSON with your analysis focusing on {role}-specific concerns."""
-            
+
             tasks.append(self._execute_single_model(provider, prompt))
-        
+
         model_responses = await asyncio.gather(*tasks, return_exceptions=True)
-        
+
         # Filter successful responses
         successful_responses = [r for r in model_responses if isinstance(r, ModelResponse)]
-        
+
         # Analyze perspective diversity
         diversity_analysis = analyze_perspective_diversity([r.response_data for r in successful_responses])
-        
+
         execution_time = time.perf_counter() - start_time
-        
+
         return EnsembleResult(
             model_responses=successful_responses,
             consensus_result=None,  # Will integrate with existing consensus engine
@@ -193,16 +193,16 @@ Return structured JSON with your analysis focusing on {role}-specific concerns."
             cross_model_insights=diversity_analysis.unique_insights_per_model,
             execution_time=execution_time
         )
-    
+
     async def _execute_single_model(self, provider: UniversalModelProvider, prompt: str) -> ModelResponse:
         """Execute audit with a single model provider."""
         import time
         start_time = time.perf_counter()
-        
+
         try:
             response_data = await provider.execute_audit(prompt)
             execution_time = time.perf_counter() - start_time
-            
+
             return ModelResponse(
                 auditor_role=provider.config.role,
                 model_provider=provider.config.provider,
@@ -210,7 +210,7 @@ Return structured JSON with your analysis focusing on {role}-specific concerns."
                 response_data=response_data,
                 execution_time=execution_time
             )
-        
+
         except Exception as e:
             execution_time = time.perf_counter() - start_time
             # Return error response
@@ -225,27 +225,27 @@ Return structured JSON with your analysis focusing on {role}-specific concerns."
 
 def analyze_perspective_diversity(responses: List[Dict[str, Any]]) -> PerspectiveDiversityAnalysis:
     """Analyze how much perspective diversity exists across model responses."""
-    
+
     # Extract insights from each model
     model_insights = {}
     all_insights = set()
-    
+
     for response in responses:
         provider = response.get("model_provider", "unknown")
-        
+
         # Extract key insights (risks, wins, feedback)
         insights = []
         overall = response.get("overall_assessment", {})
-        
+
         risks = overall.get("top_risks", [])
         wins = overall.get("quick_wins", [])
-        
+
         insights.extend(risks)
         insights.extend(wins)
-        
+
         model_insights[provider] = insights
         all_insights.update(insights)
-    
+
     # Calculate diversity score based on unique insights per model
     if not model_insights or not all_insights:
         return PerspectiveDiversityAnalysis(
@@ -254,11 +254,11 @@ def analyze_perspective_diversity(responses: List[Dict[str, Any]]) -> Perspectiv
             consensus_areas=[],
             disagreement_areas=[]
         )
-    
+
     # Find unique insights per model
     unique_per_model = {}
     consensus_insights = []
-    
+
     for provider, insights in model_insights.items():
         unique_insights = []
         for insight in insights:
@@ -267,21 +267,21 @@ def analyze_perspective_diversity(responses: List[Dict[str, Any]]) -> Perspectiv
             for other_provider, other_insights in model_insights.items():
                 if other_provider != provider:
                     other_models_insights.extend(other_insights)
-            
+
             if insight not in other_models_insights:
                 unique_insights.append(insight)
             else:
                 if insight not in consensus_insights:
                     consensus_insights.append(insight)
-        
+
         unique_per_model[provider] = unique_insights
-    
+
     # Calculate diversity score (higher = more diverse perspectives)
     total_unique = sum(len(insights) for insights in unique_per_model.values())
     total_insights = len(all_insights)
-    
+
     diversity_score = total_unique / total_insights if total_insights > 0 else 0.0
-    
+
     return PerspectiveDiversityAnalysis(
         diversity_score=diversity_score,
         unique_insights_per_model=unique_per_model,
@@ -291,9 +291,9 @@ def analyze_perspective_diversity(responses: List[Dict[str, Any]]) -> Perspectiv
 
 
 __all__ = [
-    "ModelConfig", 
+    "ModelConfig",
     "UniversalModelProvider",
-    "MultiModelOrchestrator", 
+    "MultiModelOrchestrator",
     "EnsembleResult",
     "analyze_perspective_diversity",
     "PerspectiveDiversityAnalysis"

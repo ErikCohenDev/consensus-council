@@ -17,7 +17,6 @@ from .orchestrator import AuditorOrchestrator, OrchestrationResult
 from .alignment import AlignmentValidator
 from .pipeline import PipelineOrchestrator, RevisionStrategy
 from .research_agent import ResearchAgent
-from .council_members import Council, CouncilMember
 
 
 DOCUMENT_STAGE_MAPPING = {
@@ -96,21 +95,21 @@ class AuditCommand:
     def generate_alignment_summary(self, alignment_results) -> str:
         """Create alignment validation summary."""
         lines = ["=== ALIGNMENT VALIDATION ==="]
-        
+
         total_checks = len(alignment_results)
         aligned_count = sum(1 for r in alignment_results if r.is_aligned)
-        
+
         lines.append(f"Alignment Checks: {aligned_count}/{total_checks} PASS")
-        
+
         for result in alignment_results:
             status = "✅ ALIGNED" if result.is_aligned else "❌ MISALIGNED"
             lines.append(f"{result.source_stage} → {result.target_stage}: {status} ({result.alignment_score:.1f}/5)")
-            
+
             if not result.is_aligned:
                 lines.append(f"  Issues: {len(result.misalignments)} misalignments detected")
                 if result.misalignments:
                     lines.append(f"  Key Issue: {result.misalignments[0]}")
-        
+
         return "\n".join(lines)
 
     def generate_execution_summary(self, result: OrchestrationResult) -> str:
@@ -199,11 +198,11 @@ def audit_cmd(
     # Run orchestrator
     if not template_path:
         raise click.UsageError("--template is required for auditing")
-    
+
     # Set up cache directory
     if cache_dir is None:
         cache_dir = docs_path / ".cache"
-    
+
     orchestrator = AuditorOrchestrator(
         template_path=template_path,
         model=model,
@@ -215,11 +214,11 @@ def audit_cmd(
 
     # Set up output directory
     output_dir = docs_path
-    
+
     # Run alignment validation
     alignment_validator = AlignmentValidator()
     alignment_results = alignment_validator.validate_document_chain(documents)
-    
+
     # Generate backlog files for misaligned documents
     for alignment_result in alignment_results:
         if not alignment_result.is_aligned:
@@ -230,16 +229,16 @@ def audit_cmd(
     # Generate content for output files
     audit_content = command.generate_audit_summary(stage, result)
     execution_content = command.generate_execution_summary(result)
-    
+
     # Add alignment summary to audit content
     if alignment_results:
         alignment_summary = command.generate_alignment_summary(alignment_results)
         audit_content = f"{audit_content}\n\n{alignment_summary}"
-    
+
     # Write output files according to PRD requirements
     (output_dir / "audit.md").write_text(f"{audit_content}\n\n{execution_content}", encoding="utf-8")
     (output_dir / f"decision_{stage}.md").write_text(audit_content, encoding="utf-8")
-    
+
     # Write consensus details if available
     if result.consensus_result:
         consensus_content = f"# Consensus Analysis - {stage.upper()}\n\n"
@@ -360,21 +359,21 @@ def ui_cmd(host: str, port: int, docs_path: str, debug: bool):
         click.echo(f"❌ Failed to import UI server dependencies: {e}")
         click.echo("💡 Try installing UI dependencies: pip install fastapi uvicorn websockets")
         raise SystemExit(1)
-    
+
     config = UIConfig(
         host=host,
         port=port,
         docs_path=docs_path,
         debug=debug
     )
-    
-    click.echo(f"🚀 Starting LLM Council UI server...")
+
+    click.echo("🚀 Starting LLM Council UI server...")
     click.echo(f"📍 Server will be available at: http://{host}:{port}")
     click.echo(f"📁 Default docs path: {docs_path}")
     click.echo(f"🔧 Debug mode: {'enabled' if debug else 'disabled'}")
     click.echo()
     click.echo("Press Ctrl+C to stop the server")
-    
+
     try:
         run_ui_server(config)
     except KeyboardInterrupt:

@@ -2,7 +2,6 @@
 import statistics
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
-from llm_council.schemas import AuditorResponse
 
 
 @dataclass
@@ -134,7 +133,9 @@ class ConsensusEngine:
 
         # Check for disagreement requiring human review
         requires_human_review = False
-        if agreement_level < (1.0 - self.disagreement_threshold / 5.0):  # Convert threshold to agreement scale
+        if agreement_level < (
+            1.0 - self.disagreement_threshold / 5.0
+        ):  # Convert threshold to agreement scale
             requires_human_review = True
             failure_reasons.append(f"High disagreement detected (agreement: {agreement_level:.2f})")
 
