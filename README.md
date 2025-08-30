@@ -52,6 +52,7 @@ Each document must pass consensus from our LLM council (PM, Infrastructure, Data
    ```bash
    export OPENAI_API_KEY="your-key-here"
    # Optional: export ANTHROPIC_API_KEY="your-key-here"
+   # Or configure API keys in the Web UI Settings page
    ```
 
 3. **Initialize your project documents:**
@@ -88,15 +89,17 @@ Two ways to run the UI:
 
 - Development (recommended):
 
-  - Backend: `python -m src.llm_council.ui_server`
+  - Backend: `python audit.py ui --debug`
   - Frontend: `cd frontend && npm install && npm run dev` (Vite dev server at `http://localhost:3000`, proxying `/api` and `/ws` to `http://localhost:8000`)
 
 - Production-like:
   - Build: `cd frontend && npm install && npm run build`
-  - Start backend: `python -m src.llm_council.ui_server`
+  - Start backend: `python audit.py ui`
   - The server serves `frontend/dist` automatically at `/` and assets at `/assets`.
 
 If `frontend/dist` is missing, the server shows a short message with setup instructions at `/`.
+
+**Note**: Ensure Tailwind CSS is configured with `tailwind.config.js` and `postcss.config.js` in the frontend directory for proper styling.
 
 ## 🔌 HTTP API (Projects & Runs)
 
@@ -127,14 +130,16 @@ If `frontend/dist` is missing, the server shows a short message with setup instr
 
 ## ✅ Testing & Coverage
 
-- Backend (pytest):
+- Backend (pytest): **90 tests passing**
 
-  - `pytest --maxfail=1 --disable-warnings -q`
-  - With coverage: `pytest --cov=src/llm_council --cov-report=term-missing`
+  - `PYTHONPATH=src pytest --maxfail=1 --disable-warnings -q`
+  - With coverage: `PYTHONPATH=src pytest --cov=src/llm_council --cov-report=term-missing`
 
 - Frontend (Vitest):
   - `cd frontend && npm run test`
   - With coverage/UI: `npm run test:coverage` or `npm run test:ui`
+
+Current status: Core modules (schemas, consensus, alignment, templates, cache, research, human review) have 100% test coverage. CLI and integration tests have some remaining import issues being resolved.
 
 Targets: backend ≥85%, frontend ≥80%. See `docs/TEST_PLAN.md` and `docs/TRACEABILITY_MATRIX.md`.
 

@@ -14,7 +14,7 @@ import type {
 	UIConfiguration,
 } from '@shared/types/core'
 import { create } from 'zustand'
-import { devtools, persist } from 'zustand/middleware'
+import { devtools } from 'zustand/middleware'
 
 interface AppState {
 	// UI State
@@ -43,6 +43,9 @@ interface AppState {
 
 	// Configuration
 	configuration: Partial<UIConfiguration>
+
+	// API Keys
+	apiKeys: Record<string, string | undefined>
 
 	// Error State
 	lastError: string | null
@@ -78,6 +81,8 @@ interface AppActions {
 
 	// Configuration Actions
 	updateConfiguration: (config: Partial<UIConfiguration>) => void
+	updateApiKey: (provider: string, apiKey: string) => void
+	clearApiKey: (provider: string) => void
 
 	// Error Actions
 	setError: (error: string | null) => void
@@ -126,6 +131,9 @@ const initialState: AppState = {
 		theme: 'auto',
 	},
 
+	// API Keys
+	apiKeys: {},
+
 	// Error State
 	lastError: null,
 	errorCount: 0,
@@ -133,7 +141,7 @@ const initialState: AppState = {
 
 export const useAppStore = create<AppStore>()(
 	devtools(
-		(set, get) => ({
+		(set) => ({
 			...initialState,
 
 			// UI Actions
@@ -228,6 +236,18 @@ export const useAppStore = create<AppStore>()(
 					configuration: { ...state.configuration, ...config },
 				})),
 
+			updateApiKey: (provider, apiKey) =>
+				set((state) => ({
+					...state,
+					apiKeys: { ...state.apiKeys, [provider]: apiKey },
+				})),
+
+			clearApiKey: (provider) =>
+				set((state) => ({
+					...state,
+					apiKeys: { ...state.apiKeys, [provider]: undefined },
+				})),
+
 			// Error Actions
 			setError: (lastError) => set((state) => ({ ...state, lastError })),
 
@@ -299,6 +319,8 @@ export const useAppActions = () =>
 		clearNotifications: state.clearNotifications,
 		markNotificationsRead: state.markNotificationsRead,
 		updateConfiguration: state.updateConfiguration,
+		updateApiKey: state.updateApiKey,
+		clearApiKey: state.clearApiKey,
 		setError: state.setError,
 		incrementErrorCount: state.incrementErrorCount,
 		clearErrors: state.clearErrors,

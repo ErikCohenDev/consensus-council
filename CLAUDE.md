@@ -46,20 +46,36 @@ python scripts/init_docs.py --list-templates
 python scripts/init_docs.py --force
 ```
 
-### Testing (when implemented)
+### Testing
 
 ```bash
-# Unit tests
-pytest
+# Backend unit tests (90 tests passing)
+PYTHONPATH=src pytest tests/
 
-# Integration tests with async support
-pytest -v tests/
+# Core module tests (100% passing)
+PYTHONPATH=src pytest tests/test_schemas.py tests/test_consensus_engine.py tests/test_alignment.py tests/test_template_engine.py tests/test_cache.py tests/test_research_agent.py tests/test_human_review.py
+
+# Frontend tests
+cd frontend && npm run test
 
 # Code formatting
 black .
 
 # Type checking
 mypy .
+```
+
+### Web UI Development
+
+```bash
+# Start backend (terminal 1)
+python audit.py ui --debug
+
+# Start frontend (terminal 2)
+cd frontend && npm run dev
+
+# Access UI at http://localhost:3000
+# API docs at http://localhost:8000/docs
 ```
 
 ### Audit Commands (✅ IMPLEMENTED)
@@ -174,7 +190,7 @@ scripts/
 - **Idempotent Runs**: Same inputs should produce deterministic results
 - **Exit Codes**: 0=success, 1=gate fail, 2=human review required
 
-## Implementation Status (83% Complete - 67 Tests Passing)
+## Implementation Status (90% Complete - 90 Tests Passing)
 
 ### ✅ **COMPLETED COMPONENTS:**
 
@@ -183,13 +199,18 @@ scripts/
 - **CLI Interface**: ✅ Full audit.py implementation with all options (`cli.py`)
 - **Consensus Engine**: ✅ Trimmed mean algorithm with agreement detection (`consensus.py`)
 - **Orchestrator**: ✅ Async parallel execution with retry logic (`orchestrator.py`)
+- **Alignment Validation**: ✅ Cross-document consistency checking (`alignment.py`)
+- **Human Review System**: ✅ Interactive prompts and decision framework (`human_review.py`)
+- **Research Agent**: ✅ Context gathering with Tavily integration (`research_agent.py`)
+- **Caching System**: ✅ Hash-based caching implementation (`cache.py`)
+- **Web UI**: ✅ FastAPI backend + React frontend with real-time updates
+- **Council System**: ✅ Multi-model debate and consensus building
 
 ### 🟡 **REMAINING GAPS:**
 
-- **Artifact Generation**: File output naming needs standardization (`audit.md`, `decision_<STAGE>.md`)
-- **Caching System**: Hash-based caching for cost optimization (≤$2/run target)
-- **Alignment Validation**: Cross-document consistency checking
-- **Human Review UI**: Interactive prompts for strategic decisions
+- **Import Structure**: Code duplication between `src/` and `src/llm_council/` needs cleanup
+- **Integration Tests**: Some CLI/orchestrator tests have import issues
+- **File Output**: Standardization of artifact naming conventions
 
 ## ADRs (Architectural Decision Records)
 

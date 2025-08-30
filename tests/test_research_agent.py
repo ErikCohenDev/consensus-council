@@ -1,6 +1,12 @@
 """Tests for ResearchAgent integration (R-PRD-010)."""
 import asyncio
-from src.llm_council.research_agent import ResearchAgent, ResearchContext
+import sys
+import os
+
+# Add src to Python path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+from llm_council.research_agent import ResearchAgent, ResearchContext
 
 
 def test_research_agent_disabled_returns_empty():
