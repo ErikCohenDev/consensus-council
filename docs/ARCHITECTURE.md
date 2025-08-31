@@ -7,16 +7,19 @@
 
 ## 0) Context & Constraints
 
+- **Paradigm-to-Code Architecture:** Complete pipeline from idea → paradigm selection → documents → specs → code → tests → runtime
 - **Council-Based Architecture:** CouncilMember objects with distinct personalities, debate styles, and model assignments
 - **Multi-Model Ensemble:** LiteLLM integration for OpenAI + Anthropic + Google + OpenRouter (Grok) provider flexibility
-- **Iterative Debate System:** Multi-round discussion with consensus emergence detection and disagreement analysis
-- **Research Integration:** Tavily API for internet context gathering in vision stage
-- **Template-Driven:** Project types have pre-configured model assignments per role and debate configurations
-- **Human-in-the-Loop:** Strategic documents and low consensus situations require human moderation
+- **SE Pipeline Integration:** Entity extraction → graph generation → document creation → spec generation → code generation → provenance tracking
+- **Unified Graph System:** Single graph connecting all artifacts from idea entities to runtime telemetry with bidirectional provenance
+- **Symmetry Enforcement:** CI gates preventing orphan code, misaligned tests, and requirement drift
+- **Research Integration:** Tavily API for context expansion and market validation
+- **Template-Driven:** Project types with paradigm-specific question sets and provenance configurations
+- **Human-in-the-Loop:** Strategic decisions, paradigm validation, and consensus deadlock resolution
 
 ## 1) High-Level Overview
 
-- **Components:** CLI Orchestrator, Council System, CouncilMember Objects, UniversalModelProvider (LiteLLM), DebateOrchestrator, ConsensusEngine, ResearchAgent (Tavily), AlignmentValidator, HumanReview Interface, Cache/Artifacts, Web UI (Vite + React + TypeScript).
+- **Components:** CLI Orchestrator, **Paradigm Engine**, **Entity Extractor**, **Research Expander**, Council System, CouncilMember Objects, UniversalModelProvider (LiteLLM), DebateOrchestrator, ConsensusEngine, **Graph Integration Service**, **Code Generation Engine**, **Provenance Tracker**, **SE Integration Service**, **MVP Optimizer**, AlignmentValidator, HumanReview Interface, Cache/Artifacts, Web UI (Vite + React + TypeScript).
 
 ```mermaid
 flowchart LR
