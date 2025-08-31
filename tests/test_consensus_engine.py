@@ -1,4 +1,12 @@
-"""Tests for consensus engine logic."""
+"""
+Tests for consensus engine logic.
+
+VERIFIES: REQ-003, REQ-004 (consensus algorithm, quality gates)
+VALIDATES: Trimmed mean calculation and agreement detection
+USE_CASE: UC-003, UC-004 (consensus building, human review triggers)
+INTERFACES: consensus.py (ConsensusEngine, trimmed_mean, agreement_level)
+LAST_SYNC: 2025-08-30
+"""
 import pytest
 from llm_council.consensus import (
     ConsensusEngine,
@@ -13,7 +21,12 @@ class TestTrimmedMean:
     """Test trimmed mean calculation."""
 
     def test_trimmed_mean_basic(self):
-        """Test basic trimmed mean calculation."""
+        """
+        Test basic trimmed mean calculation.
+        
+        VERIFIES: REQ-003 (consensus algorithm implementation)
+        VALIDATES: Trimmed mean removes outliers correctly
+        """
         scores = [1, 2, 3, 4, 5]
         result = calculate_trimmed_mean(scores, trim_percentage=0.2)
         # Should remove 1 and 5, leaving [2, 3, 4], average = 3.0
@@ -42,7 +55,12 @@ class TestAgreementLevel:
     """Test agreement level calculation."""
 
     def test_agreement_level_high(self):
-        """Test high agreement (low variance)."""
+        """
+        Test high agreement (low variance).
+        
+        VERIFIES: REQ-004 (agreement threshold detection)
+        VALIDATES: High consensus detection with low score variance
+        """
         scores = [4.0, 4.1, 3.9, 4.0]
         agreement = calculate_agreement_level(scores)
         assert agreement > 0.9  # Should be high agreement
@@ -64,7 +82,13 @@ class TestConsensusEngine:
     """Test consensus engine integration."""
 
     def test_consensus_pass_high_agreement(self):
-        """Test consensus passes with high scores and agreement."""
+        """
+        Test consensus passes with high scores and agreement.
+        
+        VERIFIES: REQ-003, REQ-004 (quality gate pass conditions)
+        VALIDATES: Consensus engine approval logic
+        USE_CASE: UC-003 (successful document promotion)
+        """
         engine = ConsensusEngine(
             score_threshold=3.8,
             approval_threshold=0.67,
@@ -86,7 +110,13 @@ class TestConsensusEngine:
         assert result.weighted_average >= 3.8
 
     def test_consensus_fail_low_scores(self):
-        """Test consensus fails with low average scores."""
+        """
+        Test consensus fails with low average scores.
+        
+        VERIFIES: REQ-004 (quality gate fail conditions)
+        VALIDATES: Document rejection with insufficient scores
+        USE_CASE: UC-004 (document revision required)
+        """
         engine = ConsensusEngine(
             score_threshold=3.8,
             approval_threshold=0.67,
@@ -128,7 +158,13 @@ class TestConsensusEngine:
         assert result.final_decision == "FAIL"
 
     def test_blocking_issues_prevent_pass(self):
-        """Test that critical blocking issues prevent consensus pass."""
+        """
+        Test that critical blocking issues prevent consensus pass.
+        
+        VERIFIES: REQ-006 (blocking issue severity gates)
+        VALIDATES: Critical issue override of score-based approval
+        USE_CASE: UC-004 (security/compliance blockers)
+        """
         engine = ConsensusEngine(
             score_threshold=3.8,
             approval_threshold=0.67,
@@ -149,7 +185,13 @@ class TestConsensusEngine:
         assert "critical" in str(result.failure_reasons)
 
     def test_disagreement_detection(self):
-        """Test detection of high disagreement between auditors."""
+        """
+        Test detection of high disagreement between auditors.
+        
+        VERIFIES: REQ-005 (human review trigger conditions)
+        VALIDATES: Disagreement threshold detection for human intervention
+        USE_CASE: UC-004 (human review required for deadlock)
+        """
         engine = ConsensusEngine(
             score_threshold=3.8,
             approval_threshold=0.67,
