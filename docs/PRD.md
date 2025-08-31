@@ -43,6 +43,14 @@ Note: A minimal Web UI for real-time visualization is provided for developer erg
 | R-PRD-013 | Multi-model ensemble: assign different LLMs to auditor roles for perspective diversity      | Maximize insight variety + reduce bias | S        | PM→OpenAI, Security→Claude, Data→Gemini, etc. with cross-model consensus        | model diversity |
 | R-PRD-014 | Model perspective analysis: detect unique insights and bias patterns per provider           | Optimize model selection + learning    | S        | Track which models find which types of issues; diversity scoring ≥0.7           | insight tracking |
 | R-PRD-015 | Council debate system: enable multi-round discussion between council members               | Enable sophisticated consensus building | S        | Council members can respond to peers, ask questions, build consensus over rounds | debate functionality |
+| R-PRD-016 | Paradigm engine: support YC, McKinsey, Lean Startup framework selection with specific questions | Structured idea development             | M        | Framework selection UI with paradigm-specific question sets                      | framework support |
+| R-PRD-017 | Spec & schema generation: auto-generate REQ-*.yaml, NFR-*.yaml from PRD documents         | Machine-readable contracts             | M        | Valid YAML specs with links to PRD requirements                                 | spec generation |
+| R-PRD-018 | Code artifact graph: track services → modules → classes → functions with dependencies      | Complete code traceability            | M        | Graph shows all code artifacts with provenance headers                          | artifact tracking |
+| R-PRD-019 | Provenance headers: tag all code with IMPLEMENTS/VERIFIED_BY linking to requirements       | No orphan code enforcement            | M        | Every code file has traceable requirement links                                 | 100% coverage |
+| R-PRD-020 | Traceability matrix: auto-generate REQ_ID | FRS | Code | Tests | Schema | Coverage table  | Complete system symmetry              | M        | Matrix updated on every change, enforced in CI gates                            | matrix accuracy |
+| R-PRD-021 | Impact analysis: show upstream/downstream effects of any code/doc/spec change              | Change risk assessment                | M        | Diff view shows all affected components across pipeline                          | impact visibility |
+| R-PRD-022 | Test layer tagging: unit tests (REQ-tagged), integration (interface), E2E (use-case)      | Complete test traceability           | M        | All tests tagged with appropriate requirement/interface/use-case IDs             | test coverage |
+| R-PRD-023 | Runtime telemetry tagging: services emit metrics/traces with REQ/Component IDs             | Production requirement validation     | S        | Telemetry data includes requirement traceability tags                           | telemetry tagging |
 
 ## 4) Non-Functional Requirements (NFRs)
 
@@ -112,10 +120,14 @@ Note: A minimal Web UI for real-time visualization is provided for developer erg
   `POST /api/projects/{projectId}/runs`, `GET /api/projects/{projectId}/runs/{runId}`  
   Legacy aliases (`/api/audits*`) remain during migration.
 
-### Idea Processing API Endpoints
+### Paradigm-to-Code Pipeline API Endpoints
 
-- **Idea-to-Context Pipeline**: Support project discovery through structured analysis
-  - `POST /api/ideas/extract-context` - Extract entities and relationships from idea text
-  - `POST /api/ideas/expand-research` - Enhance context graphs with targeted research insights
-  - ReactFlow-compatible JSON output for frontend graph visualization
-  - Local storage integration for seamless navigation flow
+- **Paradigm Selection**: `POST /api/paradigms/select` - Choose framework and initialize entity graph
+- **Idea Formation**: `POST /api/ideas/extract-context` - Extract entities and relationships from idea text
+- **Context Expansion**: `POST /api/ideas/expand-research` - Enhance context graphs with targeted research insights
+- **Document Generation**: `POST /api/documents/generate` - Create Vision/PRD/Architecture/Implementation from graph
+- **Spec Generation**: `POST /api/specs/generate` - Create REQ-*.yaml, NFR-*.yaml from PRD documents
+- **Code Generation**: `POST /api/code/generate` - Generate services/modules/classes/functions with provenance
+- **Traceability Matrix**: `GET /api/traceability/matrix` - Real-time requirement coverage analysis
+- **Impact Analysis**: `POST /api/changes/analyze` - Show upstream/downstream change effects
+- **Runtime Validation**: `GET /api/telemetry/requirements` - Production requirement satisfaction status

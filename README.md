@@ -2,25 +2,28 @@
 
 From idea → plan → implementation.
 
-## 📋 Document Workflow (Sequential Gates)
+## 📋 Documentation Structure
 
-**Research Phase:**
+**Vision & Strategy:**
+- **[VISION.md](./docs/VISION.md)** — High-level vision and value proposition
 
-- **[RESEARCH_BRIEF.md](./docs/RESEARCH_BRIEF.md)** — Problem validation, hypothesis, research methodology
-- **[MARKET_SCAN.md](./docs/MARKET_SCAN.md)** — Competitive analysis, market opportunity, BUILD/BUY/PARTNER decision
+**Product Requirements (by Phase):**
+- **[PRD_MVP.md](./docs/PRD_MVP.md)** — Core LLM council system (Phase 1)
+- **[PRD_PLATFORM.md](./docs/PRD_PLATFORM.md)** — Paradigm-driven development platform (Phase 2)  
+- **[PRD_PROVENANCE.md](./docs/PRD_PROVENANCE.md)** — Complete traceability system (Phase 3)
 
-**Design Phase:**
+**Architecture & Implementation:**
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — Technical design and system components
+- **[IMPLEMENTATION_PLAN.md](./docs/IMPLEMENTATION_PLAN.md)** — Task breakdown and development plan
 
-- **[VISION.md](./docs/VISION.md)** — Why this matters, who it serves, MVP scope and success
-- **[PRD.md](./docs/PRD.md)** — Requirements (with `R-PRD-###` IDs), acceptance criteria, NFRs, eval plan
-- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — Design to satisfy the PRD (components, data, interfaces, SLOs, security, diagrams)
+**Research & Discovery:**
+- **[RESEARCH_BRIEF.md](./docs/RESEARCH_BRIEF.md)** — Problem validation and research methodology  
+- **[MARKET_SCAN.md](./docs/MARKET_SCAN.md)** — Market analysis and competitive landscape
 
-**Implementation Phase:**
-
-- **[IMPLEMENTATION_PLAN.md](./docs/IMPLEMENTATION_PLAN.md)** — Task breakdown with `T-###`, TDD-ready, owners/estimates, traceability back to PRD
-- **[AUDITOR_SCHEMA.md](./docs/AUDITOR_SCHEMA.md)** — LLM council structure, rubric, consensus algorithm, quality gates
-- **[HUMAN_REVIEW_INTERFACE.md](./docs/HUMAN_REVIEW_INTERFACE.md)** — Human-in-the-loop design for strategic decisions and consensus deadlocks
-- **[GLOSSARY.md](./docs/GLOSSARY.md)** — Shared terminology, data model, and flow diagram
+**Supporting Documentation:**
+- **[AUDITOR_SCHEMA.md](./docs/AUDITOR_SCHEMA.md)** — LLM council structure and consensus algorithms
+- **[HUMAN_REVIEW_INTERFACE.md](./docs/HUMAN_REVIEW_INTERFACE.md)** — Human-in-the-loop design
+- **[GLOSSARY.md](./docs/GLOSSARY.md)** — Terminology and data models
 
 ## 🚪 Quality Gates
 

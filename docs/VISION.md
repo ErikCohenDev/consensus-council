@@ -1,51 +1,71 @@
-# VISION.md — LLM Council Audit & Consensus Platform (MVP)
+# VISION.md — LLM Council: Idea Operating System
 
-**Owner:** Erik Cohen
-**Date:** 2025-08-29  
-**Status:** Draft
+**Owner:** Erik Cohen  
+**Date:** 2025-08-30  
+**Status:** High-Level Vision
 
-## 1) One-liner
+## The Problem
 
-Generate concise, evidence-anchored audits of product docs (Vision → PRD → Architecture → Implementation Plan) using an ensemble of LLM “auditors,” then gate promotion via consensus and alignment checks—so MVPs stay small, shippable, and defensible.
+Founders and teams struggle to turn raw ideas into production-ready software. They waste time building the wrong thing, requirements drift from original vision, and code loses connection to business goals.
 
-## 2) Problem & JTBD
+## The Vision
 
-- _Problem:_ Doc reviews are slow, inconsistent, and prone to scope creep. Important risks (security, eval, scalability, cost) are missed; feedback lacks traceability.
-- _JTBD:_ “As a founder/PM/lead, I want fast, multi-perspective audits with actionable fixes and clear go/no-go gates.”
+**Transform any idea into working software with complete traceability from vision to code.**
 
-## 3) Target users
+Choose proven frameworks (YC, McKinsey, Lean), let AI + research expand your understanding, then generate documents → specs → code with every change tracked from business intent to implementation.
 
-- **Founder/PM**: wants clear Top Risks + Quick Wins to shape MVP.
-- **Senior engineer**: wants line-anchored, testable fixes.
-- **Stakeholders**: want one readable `audit.md` and a pass/fail gate.
+## Who This Serves
 
-## 4) Value & differentiation
+**Founders**: Structure your idea with proven frameworks, understand your market  
+**Product Managers**: Generate requirements that stay aligned with vision  
+**Engineers**: Build from clear specs with complete provenance  
+**Teams**: Track how any change impacts the entire system
 
-- **Multi-model ensemble council**: Different LLMs (OpenAI, Claude, Gemini, Grok) per auditor role to maximize perspective diversity and reduce single-model bias
-- **Cross-model consensus**: Models can learn from each other's insights through disagreement analysis and perspective synthesis  
-- **Role-based specialization** with **rubric** (simplicity, concision, actionability, readability, options/tradeoffs, evidence/specificity)
-- **Consensus math** + **alignment back-prop**: only advance when docs align across all models
-- Small, automatable CLI; caching; cost caps; research agent integration
+## The Experience
 
-## 5) MVP scope (IMPLEMENTED ✅)
+1. **Start with any idea** → Select a framework (YC, McKinsey, Lean)
+2. **Answer guided questions** → AI research fills gaps, human adds context  
+3. **Generate living documents** → Vision → PRD → Architecture → Implementation Plan
+4. **Council reviews & validates** → Multi-LLM auditors + human oversight
+5. **Code flows from specs** → Every function traces back to requirements
+6. **Changes show impact** → Edit anything, see what it affects across docs/code/tests
 
-**✅ In MVP:**
+## What Makes This Different
 
-- **Council Debate System**: CouncilMember objects with personalities, debate styles, and multi-round discussion
-- **Multi-Model Ensemble**: OpenAI + Anthropic + Google + OpenRouter (Grok) via LiteLLM for maximum perspective diversity
-- **Research Agent**: Tavily integration for internet context gathering in vision stage  
-- **Complete Document Pipeline**: Research Brief → Market Scan → Vision → PRD → Architecture → Implementation Plan
-- **Cross-Document Alignment**: Validation with backlog generation for misaligned transitions
-- **Structured Outputs**: `audit.md`, `consensus_<DOC>.md`, `decision_<STAGE>.md`, `alignment_backlog_<DOC>.md`
-- **Cost Controls**: Caching system achieving ≤$2/run target with parallel execution
+**Proven Frameworks**: Built on YC, McKinsey, Lean principles - not generic templates  
+**AI + Human Intelligence**: LLM research + human strategic judgment  
+**Complete Traceability**: Every code change traces back to original business intent  
+**Multi-Model Council**: Different AI models audit different aspects for better decisions  
 
-**🔮 Future (v2):** Advanced council moderation, learning from feedback, real-time debate UI, cross-repo integration
+## Current Status
 
-## 6) Success metrics (initial targets)
+**✅ MVP Ready**: Core council system with document generation  
+**🔄 Building**: Full paradigm platform with research integration  
+**🔮 Planned**: Complete provenance from vision to runtime observability
 
-- p95 end-to-end runtime ≤ **5 min** for ≤ **30 pages** total.
-- Default run cost ≤ **$2** with caching on.
-- JSON validity ≥ **99%**; gate decisions deterministic.
+See detailed requirements in:
+- [PRD_MVP.md](./PRD_MVP.md) - Core council system
+- [PRD_PLATFORM.md](./PRD_PLATFORM.md) - Paradigm-driven development  
+- [PRD_PROVENANCE.md](./PRD_PROVENANCE.md) - Complete traceability
+
+## Success Metrics
+
+**Time to Value**: Raw idea → validated documents ≤15 min  
+**Quality**: Human override rate ≤20% (high AI + research accuracy)  
+**Cost**: ≤$2 per complete idea → code transformation  
+**Traceability**: 100% code coverage with requirement links
+- **Impact Analysis**: ≤30 sec to show change propagation across entire pipeline
+
+### **Quality & Alignment:**
+- **Requirements Coverage**: ≥90% of REQ-XXX have implementing code
+- **Test Coverage**: ≥80% of source files have corresponding tests  
+- **Provenance Completeness**: 100% of generated code has traceable requirements
+- **Drift Detection**: ≤5% drift score between specs and implementation
+
+### **Cost & Reliability:**
+- **Total Cost**: ≤$3/run including research, council debates, and code generation
+- **Cache Hit Rate**: ≥70% for iterative development cycles
+- **JSON Validity**: ≥99% with automatic retry logic
 
 ## 7) Constraints & assumptions
 

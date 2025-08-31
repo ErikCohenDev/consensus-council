@@ -103,6 +103,23 @@ tests/                     # tests evolving
 | API-002  | Add runId to WS and scope by project/run       | Interfaces | 0.5d | Planned|
 | API-003  | Optional project registry (derive id from path)| Interfaces | 1d   | Planned|
 
+### SE Pipeline Tasks (NEW)
+
+| ID       | Task                                         | PRD Link   | Est. | Status |
+|----------|----------------------------------------------|------------|------|--------|
+| SE-001   | Paradigm engine: framework selection + questions | R-PRD-016  | 2d   | Planned|
+| SE-002   | Entity extractor: idea → graph entities      | Pipeline   | 1d   | Done   |
+| SE-003   | Research expander: context enrichment        | Pipeline   | 1d   | Done   |
+| SE-004   | Graph integration: unified artifact graph    | Pipeline   | 2d   | Done   |
+| SE-005   | Spec generator: REQ/NFR YAML from PRDs       | R-PRD-017  | 1.5d | Planned|
+| SE-006   | Code generation engine: stubs with provenance| R-PRD-018  | 3d   | Planned|
+| SE-007   | Provenance tracker: bidirectional tracing   | R-PRD-019  | 2d   | Planned|
+| SE-008   | Traceability matrix: auto-generated coverage | R-PRD-020  | 1d   | Planned|
+| SE-009   | Impact analysis: change propagation display  | R-PRD-021  | 2d   | Planned|
+| SE-010   | Test layer tagging: REQ/interface/UC mapping| R-PRD-022  | 1.5d | Planned|
+| SE-011   | MVP optimizer: scope and resource planning  | Pipeline   | 1d   | Done   |
+| SE-012   | Runtime telemetry integration              | R-PRD-023  | 2d   | Planned|
+
 ## 3) Quality & Evaluation Gates
 
 - **Offline**: schema validity ≥99%; consensus repeatable; gate verdict stable with identical inputs.
