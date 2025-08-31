@@ -1,4 +1,12 @@
-"""Tests for audit caching system."""
+"""
+Tests for audit caching system.
+
+VERIFIES: REQ-014, REQ-015 (caching system, performance optimization)
+VALIDATES: Hash-based cache storage and retrieval mechanisms
+USE_CASE: UC-009 (audit result caching, cost optimization)
+INTERFACES: cache.py (AuditCache, CacheKey)
+LAST_SYNC: 2025-08-30
+"""
 import pytest
 import hashlib
 import json
@@ -13,7 +21,13 @@ class TestCacheKey:
     """Test cache key generation."""
 
     def test_cache_key_generation(self):
-        """Test that cache keys are generated consistently."""
+        """
+        Test that cache keys are generated consistently.
+        
+        VERIFIES: REQ-014 (cache key generation for content hashing)
+        VALIDATES: Deterministic hash generation for cache indexing
+        USE_CASE: UC-009 (audit result deduplication)
+        """
         key1 = CacheKey.generate("gpt-4o", "template_hash", "prompt_hash", "content_hash")
         key2 = CacheKey.generate("gpt-4o", "template_hash", "prompt_hash", "content_hash")
 
@@ -22,7 +36,13 @@ class TestCacheKey:
         assert len(key1) > 10  # Should be a meaningful hash
 
     def test_cache_key_different_inputs(self):
-        """Test that different inputs generate different cache keys."""
+        """
+        Test that different inputs generate different cache keys.
+        
+        VERIFIES: REQ-014 (cache key uniqueness and collision avoidance)
+        VALIDATES: Hash sensitivity to input parameter changes
+        USE_CASE: UC-009 (accurate cache hit/miss detection)
+        """
         key1 = CacheKey.generate("gpt-4o", "template1", "prompt1", "content1")
         key2 = CacheKey.generate("gpt-4o", "template2", "prompt1", "content1")
         key3 = CacheKey.generate("gpt-3.5-turbo", "template1", "prompt1", "content1")

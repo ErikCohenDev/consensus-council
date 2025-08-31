@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 from typing import List, Optional, Dict, Any
+from datetime import datetime
 from pydantic import BaseModel, Field
 
 
@@ -73,3 +74,77 @@ class ReactFlowGraph(BaseModel):
     edges: List[Dict[str, Any]]
     central_entity: str
     confidence: float
+
+
+# Additional models for E2E testing
+
+class Problem(BaseModel):
+    """Problem entity extracted from idea."""
+    id: str
+    statement: str
+    impact_metric: str
+    pain_level: float = Field(ge=0.0, le=1.0)
+    frequency: float = Field(ge=0.0, le=1.0)
+    confidence: float = Field(ge=0.0, le=1.0)
+
+
+class ICP(BaseModel):
+    """Ideal Customer Profile entity."""
+    id: str
+    segment: str
+    size: int
+    pains: List[str]
+    gains: List[str]
+    wtp: float  # Willingness to pay
+    confidence: float = Field(ge=0.0, le=1.0)
+
+
+class Assumption(BaseModel):
+    """Assumption about the idea or market."""
+    id: str
+    statement: str
+    type: str  # "market", "technical", "business", etc.
+    criticality: float = Field(ge=0.0, le=1.0)
+    confidence: float = Field(ge=0.0, le=1.0)
+    validation_method: str
+
+
+class Constraint(BaseModel):
+    """Constraint affecting the idea implementation."""
+    id: str
+    type: str  # "regulatory", "technical", "resource", etc.
+    description: str
+    impact: float = Field(ge=0.0, le=1.0)
+    mitigation: str
+    confidence: float = Field(ge=0.0, le=1.0)
+
+
+class Outcome(BaseModel):
+    """Desired outcome or success metric."""
+    id: str
+    description: str
+    metric: str
+    target: float
+    timeline: str
+    confidence: float = Field(ge=0.0, le=1.0)
+
+
+class ExtractedEntities(BaseModel):
+    """Complete set of extracted entities from idea."""
+    problems: List[Problem] = Field(default_factory=list)
+    icps: List[ICP] = Field(default_factory=list)
+    assumptions: List[Assumption] = Field(default_factory=list)
+    constraints: List[Constraint] = Field(default_factory=list)
+    outcomes: List[Outcome] = Field(default_factory=list)
+
+
+class IdeaGraph(BaseModel):
+    """Complete idea graph with all entities and metadata."""
+    id: str
+    content: str
+    paradigm: str
+    entities: ExtractedEntities
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    status: str = "active"
+    confidence: float = Field(ge=0.0, le=1.0, default=0.5)

@@ -1,4 +1,12 @@
-"""Tests for auditor orchestration system."""
+"""
+Tests for auditor orchestration system.
+
+VERIFIES: REQ-001, REQ-007 (audit orchestration, parallel execution)
+VALIDATES: Async worker management and consensus coordination
+USE_CASE: UC-003, UC-004 (document auditing, parallel processing)
+INTERFACES: orchestrator.py (AuditorOrchestrator, AuditorWorker, OrchestrationResult)
+LAST_SYNC: 2025-08-30
+"""
 import pytest
 import asyncio
 from unittest.mock import Mock, AsyncMock, patch
@@ -16,7 +24,13 @@ class TestAuditorWorker:
     
     @pytest.mark.asyncio
     async def test_auditor_worker_successful_execution(self, sample_template_config):
-        """Test successful auditor execution."""
+        """
+        Test successful auditor execution.
+        
+        VERIFIES: REQ-001 (individual auditor execution)
+        VALIDATES: AuditorWorker async execution and JSON response parsing
+        USE_CASE: UC-003 (single auditor document evaluation)
+        """
         # Mock OpenAI client
         mock_client = AsyncMock()
         mock_response = Mock()
@@ -46,7 +60,13 @@ class TestAuditorWorker:
     
     @pytest.mark.asyncio
     async def test_auditor_worker_json_validation_retry(self, sample_template_config):
-        """Test that worker retries on invalid JSON and eventually succeeds."""
+        """
+        Test that worker retries on invalid JSON and eventually succeeds.
+        
+        VERIFIES: REQ-007 (error handling and retry logic)
+        VALIDATES: JSON validation with automatic retry mechanism
+        USE_CASE: UC-003 (resilient auditor execution)
+        """
         mock_client = AsyncMock()
         
         # First call returns invalid JSON, second call returns valid JSON
@@ -129,7 +149,13 @@ class TestAuditorOrchestrator:
     
     @pytest.mark.asyncio
     async def test_orchestrator_successful_execution(self, temp_dir, sample_template_config, sample_document_content):
-        """Test successful orchestration of multiple auditors."""
+        """
+        Test successful orchestration of multiple auditors.
+        
+        VERIFIES: REQ-001, REQ-007 (complete audit orchestration)
+        VALIDATES: Parallel auditor execution with consensus building
+        USE_CASE: UC-003 (multi-auditor document validation)
+        """
         # Create template file
         import yaml
         template_file = temp_dir / "test_template.yaml"
@@ -171,7 +197,13 @@ class TestAuditorOrchestrator:
     
     @pytest.mark.asyncio
     async def test_orchestrator_partial_failure(self, temp_dir, sample_template_config, sample_document_content):
-        """Test orchestrator handling of partial auditor failures.""" 
+        """
+        Test orchestrator handling of partial auditor failures.
+        
+        VERIFIES: REQ-007 (error recovery and graceful degradation)
+        VALIDATES: Partial failure handling without complete system failure
+        USE_CASE: UC-004 (audit resilience with individual auditor failures)
+        """ 
         import yaml
         template_file = temp_dir / "test_template.yaml"
         with open(template_file, 'w') as f:

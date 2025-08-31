@@ -1,4 +1,12 @@
-"""Tests for alignment validation system."""
+"""
+Tests for alignment validation system.
+
+VERIFIES: REQ-010, REQ-011 (cross-document alignment, upstream consistency)
+VALIDATES: Document dependency tracking and misalignment detection
+USE_CASE: UC-005, UC-006 (document chain validation, alignment feedback)
+INTERFACES: alignment.py (AlignmentValidator, AlignmentResult, DocumentDependency)
+LAST_SYNC: 2025-08-30
+"""
 import pytest
 import tempfile
 from pathlib import Path
@@ -11,7 +19,12 @@ class TestDocumentDependency:
     """Test document dependency definitions."""
 
     def test_document_dependency_creation(self):
-        """Test creating document dependencies."""
+        """
+        Test creating document dependencies.
+        
+        VERIFIES: REQ-010 (document dependency modeling)
+        VALIDATES: DocumentDependency data structure and relationships
+        """
         dep = DocumentDependency(
             source_stage="vision",
             target_stage="prd",
@@ -92,7 +105,13 @@ class TestAlignmentValidator:
         assert hasattr(validator, 'generate_backlog_file')
 
     def test_validate_alignment_basic(self):
-        """Test basic alignment validation between two documents."""
+        """
+        Test basic alignment validation between two documents.
+        
+        VERIFIES: REQ-011 (cross-document consistency validation)
+        VALIDATES: AlignmentValidator core functionality with compatible documents
+        USE_CASE: UC-005 (upstream document alignment check)
+        """
         validator = AlignmentValidator()
 
         vision_content = """# Vision
@@ -117,7 +136,13 @@ class TestAlignmentValidator:
         assert len(result.misalignments) == 0
 
     def test_validate_alignment_with_conflicts(self):
-        """Test alignment validation detecting conflicts."""
+        """
+        Test alignment validation detecting conflicts.
+        
+        VERIFIES: REQ-011 (misalignment detection and reporting)
+        VALIDATES: Conflict identification between incompatible documents
+        USE_CASE: UC-006 (document revision required due to conflicts)
+        """
         validator = AlignmentValidator()
 
         vision_content = """# Vision
@@ -162,7 +187,13 @@ class TestAlignmentValidator:
         assert len(result.misalignments) > 0
 
     def test_generate_backlog_file(self):
-        """Test backlog file generation for misalignments."""
+        """
+        Test backlog file generation for misalignments.
+        
+        VERIFIES: REQ-011 (alignment feedback and action items)
+        VALIDATES: Backlog generation with structured improvement suggestions
+        USE_CASE: UC-006 (actionable alignment feedback)
+        """
         validator = AlignmentValidator()
 
         misalignments = [

@@ -1,4 +1,12 @@
-"""Tests for template engine configuration loading."""
+"""
+Tests for template engine configuration loading.
+
+VERIFIES: REQ-008, REQ-009 (template system, YAML configuration)
+VALIDATES: Template loading, validation, and auditor configuration
+USE_CASE: UC-001, UC-002 (paradigm selection, template customization)
+INTERFACES: templates.py (TemplateEngine, TemplateConfig, AuditorConfig)
+LAST_SYNC: 2025-08-30
+"""
 import pytest
 import yaml
 from pathlib import Path
@@ -15,7 +23,12 @@ class TestTemplateConfig:
     """Test template configuration data structure."""
     
     def test_valid_template_config(self, sample_template_config):
-        """Test that valid template configs are accepted."""
+        """
+        Test that valid template configs are accepted.
+        
+        VERIFIES: REQ-008 (template configuration structure)
+        VALIDATES: TemplateConfig model with required fields
+        """
         config = TemplateConfig(**sample_template_config)
         
         assert config.project_info["name"] == "Test Template"
@@ -93,7 +106,13 @@ class TestTemplateLoading:
     """Test template loading from files."""
     
     def test_load_template_from_file(self, temp_dir, sample_template_config):
-        """Test loading template config from YAML file."""
+        """
+        Test loading template config from YAML file.
+        
+        VERIFIES: REQ-009 (YAML configuration loading)
+        VALIDATES: File system template loading with error handling
+        USE_CASE: UC-001 (paradigm framework selection)
+        """
         template_file = temp_dir / "test_template.yaml"
         with open(template_file, 'w') as f:
             yaml.dump(sample_template_config, f)
@@ -193,7 +212,13 @@ class TestTemplateEngine:
     """Test template engine orchestration."""
     
     def test_template_engine_initialization(self, temp_dir, sample_template_config):
-        """Test template engine initializes correctly."""
+        """
+        Test template engine initializes correctly.
+        
+        VERIFIES: REQ-008, REQ-009 (template engine orchestration)
+        VALIDATES: TemplateEngine initialization and configuration loading
+        USE_CASE: UC-001 (paradigm framework instantiation)
+        """
         template_file = temp_dir / "template.yaml"
         with open(template_file, 'w') as f:
             yaml.dump(sample_template_config, f)
@@ -216,7 +241,13 @@ class TestTemplateEngine:
         assert len(auditors) >= 1
 
     def test_get_auditor_prompt(self, temp_dir, sample_template_config):
-        """Test generating prompts for specific auditor."""
+        """
+        Test generating prompts for specific auditor.
+        
+        VERIFIES: REQ-008 (auditor prompt generation)
+        VALIDATES: Template-driven prompt customization
+        USE_CASE: UC-003 (auditor-specific document evaluation)
+        """
         template_file = temp_dir / "template.yaml"
         with open(template_file, 'w') as f:
             yaml.dump(sample_template_config, f)

@@ -1,4 +1,12 @@
-"""Tests for CLI interface."""
+"""
+Tests for CLI interface.
+
+VERIFIES: REQ-012, REQ-013 (CLI interface, command-line argument parsing)
+VALIDATES: Click command structure and audit command execution
+USE_CASE: UC-001, UC-007 (command-line usage, user interface)
+INTERFACES: cli.py (cli, AuditCommand)
+LAST_SYNC: 2025-08-30
+"""
 import pytest
 import tempfile
 import yaml
@@ -13,7 +21,13 @@ class TestCLICommands:
     """Test CLI command structure and parsing."""
 
     def test_cli_help_output(self):
-        """Test that CLI shows help information."""
+        """
+        Test that CLI shows help information.
+        
+        VERIFIES: REQ-012 (CLI interface help and usage)
+        VALIDATES: Click command help generation
+        USE_CASE: UC-007 (user guidance and documentation)
+        """
         runner = CliRunner()
         result = runner.invoke(cli, ['--help'])
 
@@ -22,7 +36,13 @@ class TestCLICommands:
         assert "audit" in result.output
 
     def test_audit_command_help(self):
-        """Test audit subcommand help."""
+        """
+        Test audit subcommand help.
+        
+        VERIFIES: REQ-013 (audit command parameter documentation)
+        VALIDATES: Audit subcommand help display
+        USE_CASE: UC-007 (command-line usage guidance)
+        """
         runner = CliRunner()
         result = runner.invoke(cli, ['audit', '--help'])
 
@@ -44,7 +64,13 @@ class TestAuditCommand:
     """Test audit command functionality."""
 
     def test_audit_command_initialization(self, temp_dir, sample_template_config, sample_quality_gates):
-        """Test audit command initialization."""
+        """
+        Test audit command initialization.
+        
+        VERIFIES: REQ-012, REQ-013 (audit command setup and validation)
+        VALIDATES: AuditCommand instantiation with configuration loading
+        USE_CASE: UC-001 (audit process initiation)
+        """
         # Create necessary files
         docs_dir = temp_dir / "docs"
         docs_dir.mkdir()

@@ -1,4 +1,12 @@
-"""Tests for human review interface system."""
+"""
+Tests for human review interface system.
+
+VERIFIES: REQ-005, REQ-006 (human review triggers, decision framework)
+VALIDATES: Interactive review workflow and decision capture
+USE_CASE: UC-004, UC-008 (human intervention, strategic decisions)
+INTERFACES: human_review.py (HumanReviewInterface, ReviewDecision, ReviewTrigger)
+LAST_SYNC: 2025-08-30
+"""
 import pytest
 from io import StringIO
 from unittest.mock import Mock, patch
@@ -12,7 +20,13 @@ class TestReviewDecision:
     """Test review decision data structure."""
     
     def test_review_decision_creation(self):
-        """Test creating review decisions."""
+        """
+        Test creating review decisions.
+        
+        VERIFIES: REQ-005 (human decision capture and structure)
+        VALIDATES: ReviewDecision data model with action and rationale
+        USE_CASE: UC-004 (human approval/rejection decisions)
+        """
         decision = ReviewDecision(
             action="APPROVE",
             rationale="Document meets all requirements",
@@ -44,7 +58,13 @@ class TestReviewTrigger:
     """Test review trigger detection."""
     
     def test_trigger_detection_low_consensus(self):
-        """Test trigger detection for low consensus."""
+        """
+        Test trigger detection for low consensus.
+        
+        VERIFIES: REQ-005 (consensus threshold triggers for human review)
+        VALIDATES: ReviewTrigger detection logic for disagreement
+        USE_CASE: UC-004 (automated human review escalation)
+        """
         consensus_result = ConsensusResult(
             weighted_average=3.2,
             consensus_pass=False,

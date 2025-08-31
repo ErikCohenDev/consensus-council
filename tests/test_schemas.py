@@ -1,4 +1,12 @@
-"""Tests for auditor response schema validation."""
+"""
+Tests for auditor response schema validation.
+
+VERIFIES: REQ-001, REQ-002, REQ-003 (audit orchestration, consensus engine, schema validation)
+VALIDATES: JSON schema compliance and data structure integrity
+USE_CASE: UC-003 (document validation and scoring)
+INTERFACES: schemas.py (AuditorResponse, DimensionScore, OverallAssessment)
+LAST_SYNC: 2025-08-30
+"""
 import pytest
 from pydantic import ValidationError
 from llm_council.schemas import AuditorResponse, DimensionScore, OverallAssessment
@@ -8,7 +16,12 @@ class TestDimensionScore:
     """Test dimension score validation."""
 
     def test_valid_dimension_score(self):
-        """Test that valid dimension scores are accepted."""
+        """
+        Test that valid dimension scores are accepted.
+        
+        VERIFIES: REQ-002 (schema validation for dimension scoring)
+        VALIDATES: DimensionScore model with score range 1-5
+        """
         score_data = {
             "score": 4,
             "pass": True,
@@ -23,7 +36,12 @@ class TestDimensionScore:
         assert len(score.improvements) >= 1
 
     def test_score_out_of_range_fails(self):
-        """Test that scores outside 1-5 range are rejected."""
+        """
+        Test that scores outside 1-5 range are rejected.
+        
+        VERIFIES: REQ-002 (schema validation boundaries)
+        VALIDATES: Pydantic validation for score constraints
+        """
         with pytest.raises(ValidationError):
             DimensionScore(
                 score=0,  # Invalid - below range
@@ -65,7 +83,12 @@ class TestOverallAssessment:
     """Test overall assessment validation."""
 
     def test_valid_overall_assessment(self):
-        """Test that valid overall assessments are accepted."""
+        """
+        Test that valid overall assessments are accepted.
+        
+        VERIFIES: REQ-002, REQ-003 (overall assessment calculation)
+        VALIDATES: OverallAssessment model structure and constraints
+        """
         assessment_data = {
             "average_score": 3.83,
             "overall_pass": True,
@@ -112,7 +135,13 @@ class TestAuditorResponse:
     """Test full auditor response validation."""
 
     def test_valid_auditor_response(self, sample_auditor_response):
-        """Test that valid auditor responses are accepted."""
+        """
+        Test that valid auditor responses are accepted.
+        
+        VERIFIES: REQ-001, REQ-002 (complete auditor response validation)
+        VALIDATES: AuditorResponse model with all required fields
+        USE_CASE: UC-003 (auditor assessment generation)
+        """
         response = AuditorResponse(**sample_auditor_response)
 
         assert response.auditor_role == "pm"
@@ -144,7 +173,12 @@ class TestAuditorResponse:
             AuditorResponse(**sample_auditor_response)
 
     def test_calculated_average_score_matches(self, sample_auditor_response):
-        """Test that average score is calculated correctly from dimension scores."""
+        """
+        Test that average score is calculated correctly from dimension scores.
+        
+        VERIFIES: REQ-003 (consensus calculation accuracy)
+        VALIDATES: Mathematical consistency in score aggregation
+        """
         # This will be implemented when we add validation logic
         response = AuditorResponse(**sample_auditor_response)
 
@@ -161,7 +195,12 @@ class TestAuditorResponse:
         assert abs(response.overall_assessment.average_score - expected_avg) < 0.01
 
     def test_overall_pass_logic_correct(self, sample_auditor_response):
-        """Test that overall pass logic is correct (avg >= 3.8 AND all dimensions >= 3.0)."""
+        """
+        Test that overall pass logic is correct (avg >= 3.8 AND all dimensions >= 3.0).
+        
+        VERIFIES: REQ-003 (quality gate thresholds)
+        VALIDATES: Boolean logic for document approval
+        """
         # Test case where average is high enough but one dimension fails
         sample_auditor_response["scores_detailed"]["conciseness"]["score"] = 2  # Below 3.0
         sample_auditor_response["scores_detailed"]["conciseness"]["pass"] = False
