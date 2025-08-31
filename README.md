@@ -2,28 +2,19 @@
 
 From idea → plan → implementation.
 
-## 📋 Documentation Structure
+## 📋 Documentation
 
-**Vision & Strategy:**
-- **[VISION.md](./docs/VISION.md)** — High-level vision and value proposition
+**Essential Reading:**
+- **[VISION.md](./docs/VISION.md)** — Project vision and current status
+- **[PRD_MVP.md](./docs/PRD_MVP.md)** — MVP requirements and implementation status
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — Technical architecture and design
 
-**Product Requirements (by Phase):**
-- **[PRD_MVP.md](./docs/PRD_MVP.md)** — Core LLM council system (Phase 1)
-- **[PRD_PLATFORM.md](./docs/PRD_PLATFORM.md)** — Paradigm-driven development platform (Phase 2)  
-- **[PRD_PROVENANCE.md](./docs/PRD_PROVENANCE.md)** — Complete traceability system (Phase 3)
+**Validation & Status:**
+- **[VALIDATION_SUMMARY.md](./VALIDATION_SUMMARY.md)** — Current validation results (13/13 tests passing)
+- **[VALIDATION_README.md](./VALIDATION_README.md)** — How to run system validation
 
-**Architecture & Implementation:**
-- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — Technical design and system components
-- **[IMPLEMENTATION_PLAN.md](./docs/IMPLEMENTATION_PLAN.md)** — Task breakdown and development plan
-
-**Research & Discovery:**
-- **[RESEARCH_BRIEF.md](./docs/RESEARCH_BRIEF.md)** — Problem validation and research methodology  
-- **[MARKET_SCAN.md](./docs/MARKET_SCAN.md)** — Market analysis and competitive landscape
-
-**Supporting Documentation:**
-- **[AUDITOR_SCHEMA.md](./docs/AUDITOR_SCHEMA.md)** — LLM council structure and consensus algorithms
-- **[HUMAN_REVIEW_INTERFACE.md](./docs/HUMAN_REVIEW_INTERFACE.md)** — Human-in-the-loop design
-- **[GLOSSARY.md](./docs/GLOSSARY.md)** — Terminology and data models
+**Complete Documentation:**
+- **[docs/README.md](./docs/README.md)** — Full documentation index and navigation
 
 ## 🚪 Quality Gates
 
